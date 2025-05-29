@@ -327,7 +327,7 @@ export function IncomeTable() {
                 <TableCell className="text-right font-medium">
                   ${item.amount.toFixed(2)}
                 </TableCell>
-                <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(item.date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}</TableCell>
                 <TableCell>{item.paymentMethod}</TableCell>
                 <TableCell>{item.assignee}</TableCell>
                 <TableCell>

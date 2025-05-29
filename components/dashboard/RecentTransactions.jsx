@@ -68,12 +68,13 @@ export function RecentTransactions() {
             <p className="text-sm font-medium leading-none">
               {transaction.description}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {new Date(transaction.date).toLocaleDateString()} · 
-              <Badge variant="outline" className="ml-2 text-xs">
+            <div className="text-xs text-muted-foreground flex items-center gap-2">
+              <span>{new Date(transaction.date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}</span>
+              <span>·</span>
+              <Badge variant="outline" className="text-xs">
                 {transaction.category}
               </Badge>
-            </p>
+            </div>
           </div>
           <div className={cn(
             "font-medium",

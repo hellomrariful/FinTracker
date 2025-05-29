@@ -398,7 +398,7 @@ export function ExpenseTable() {
                 <TableCell className="text-right font-medium text-rose-600 dark:text-rose-400">
                   -${item.amount.toFixed(2)}
                 </TableCell>
-                <TableCell>{new Date(item.date).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(item.date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}</TableCell>
                 <TableCell>{item.paymentMethod}</TableCell>
                 <TableCell>{item.responsible}</TableCell>
                 <TableCell>
