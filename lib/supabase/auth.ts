@@ -38,22 +38,8 @@ export async function signUp({ email, password, firstName, lastName, company }: 
       return { user: null, error };
     }
 
-    // Create profile record
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          email: data.user.email!,
-          full_name: `${firstName} ${lastName}`,
-          company,
-          role: 'owner'
-        });
-
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
-      }
-    }
+    // Profile record is automatically created by database trigger
+    // No need to manually insert into profiles table
 
     return { user: data.user, error: null };
   } catch (error) {
