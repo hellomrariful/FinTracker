@@ -18,7 +18,7 @@ export function HeroSection() {
           {/* Badge */}
           <div className="mb-8 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
             <Zap className="mr-2 h-4 w-4" />
-            New: AI-Powered Financial Insights
+            FinTracker: Your Digital Finance Manager!
           </div>
 
           {/* Headline */}
