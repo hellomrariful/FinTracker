@@ -25,13 +25,13 @@ const values = [
 
 const team = [
   {
-    name: 'Alex Thompson',
+    name: 'Ariful Islam',
     role: 'CEO & Co-founder',
     imageUrl: 'https://avatars.githubusercontent.com/u/121743984?v=4',
     bio: 'Former Goldman Sachs analyst with 10+ years in fintech. Passionate about democratizing financial tools.',
   },
   {
-    name: 'Sarah Kim',
+    name: 'Rakibul Islam',
     role: 'CTO & Co-founder',
     imageUrl: 'https://media.licdn.com/dms/image/v2/D5603AQEEAJ0yZ0WRSQ/profile-displayphoto-shrink_800_800/B56ZPplIl3GsAc-/0/1734790646594?e=1756944000&v=beta&t=BwArp1Xh0h4ErOawRkdB5l6O7VQui8N3obKEs0yexHA',
     bio: 'Ex-Google engineer specializing in scalable systems. Believes technology should make complex things simple.',
@@ -43,7 +43,7 @@ const team = [
     bio: 'Product strategist with experience at Stripe and Square. Focused on building intuitive financial experiences.',
   },
   {
-    name: 'Emily Chen',
+    name: 'Robert Van',
     role: 'Head of Design',
     imageUrl: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop&crop=face',
     bio: 'Design leader from Airbnb. Passionate about creating beautiful, accessible interfaces that users love.',
