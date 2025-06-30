@@ -142,17 +142,6 @@ export function DashboardOverview() {
             Welcome back! Here's what's happening with your finances.
           </p>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <Link href="/dashboard/income?add=true">
-            <Button size="sm" className="group relative overflow-hidden transition-all duration-200 hover:scale-105 active:scale-95">
-              <span className="relative z-10 flex items-center">
-                <Plus className="mr-2 h-4 w-4 transition-transform group-hover:rotate-90" />
-                Add
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 transition-opacity group-hover:opacity-20" />
-            </Button>
-          </Link>
-        </div>
       </div>
 
       {/* Stats Cards */}
