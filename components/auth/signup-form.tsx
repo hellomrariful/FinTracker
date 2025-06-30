@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { BarChart3, Eye, EyeOff } from 'lucide-react';
+import { BarChart3, Eye, EyeOff, Info } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -38,6 +38,30 @@ export function SignupForm() {
         <p className="mt-2 text-sm text-muted-foreground">
           Start your 30-day free trial today
         </p>
+      </div>
+
+      {/* Demo Credentials Banner */}
+      <div className="mt-6 bg-primary/10 border border-primary/20 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-primary mb-2">Demo Account Available</h3>
+            <div className="space-y-1 text-sm text-foreground">
+              <div><strong>Email:</strong> demo@fintracker.com</div>
+              <div><strong>Password:</strong> fintracker123</div>
+            </div>
+            <Link href="/auth/signin">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                className="mt-3 text-xs"
+              >
+                Use Demo Account
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
 
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
