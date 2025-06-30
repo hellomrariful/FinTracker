@@ -163,7 +163,7 @@ export default function ExpensesPage() {
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((category) => (
+              {categories.filter(category => category.name && category.name.trim() !== '').map((category) => (
                 <SelectItem key={category.id} value={category.name}>
                   {category.name}
                 </SelectItem>

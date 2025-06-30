@@ -77,8 +77,8 @@ export default function IncomePage() {
   const topEarningEmployeeId = Object.entries(incomeByEmployee).reduce((a, b) => a[1] > b[1] ? a : b, ['', 0])[0];
   const topEarningEmployee = employees.find(e => e.id === topEarningEmployeeId);
 
-  // Get unique sources for dropdown
-  const existingSources = [...new Set(incomeTransactions.map(t => t.source))];
+  // Get unique sources for dropdown - filter out empty strings
+  const existingSources = [...new Set(incomeTransactions.map(t => t.source))].filter(source => source && source.trim() !== '');
 
   // Filter income transactions based on search
   const filteredIncomeTransactions = incomeTransactions.filter(income =>
@@ -204,7 +204,7 @@ export default function IncomePage() {
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((category) => (
+              {categories.filter(category => category.name && category.name.trim() !== '').map((category) => (
                 <SelectItem key={category.id} value={category.name}>
                   {category.name}
                 </SelectItem>
