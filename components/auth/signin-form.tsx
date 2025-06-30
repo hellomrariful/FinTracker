@@ -51,7 +51,7 @@ export function SigninForm() {
               autoComplete="email"
               required
               className="mt-1"
-              placeholder="Enter your email"
+              placeholder="demo@fintracker.com"
             />
           </div>
           <div>
