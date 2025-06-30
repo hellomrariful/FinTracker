@@ -89,6 +89,7 @@ export function IncomeForm({
       date: formData.get('date') as string,
       paymentMethod: formData.get('paymentMethod') as string,
       employeeId: formData.get('employeeId') as string,
+      status: 'completed' as const,
     };
 
     if (income) {
