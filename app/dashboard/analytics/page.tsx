@@ -79,6 +79,11 @@ export default function AnalyticsPage() {
           startDate: prevMonth.toISOString().split('T')[0],
           endDate: prevMonthEnd.toISOString().split('T')[0]
         };
+      case 'last-3-months':
+        return {
+          startDate: new Date(now.getFullYear(), now.getMonth() - 6, 1).toISOString().split('T')[0],
+          endDate: new Date(now.getFullYear(), now.getMonth() - 3, 0).toISOString().split('T')[0]
+        };
       default:
         return { startDate: '', endDate: '' };
     }
@@ -96,15 +101,31 @@ export default function AnalyticsPage() {
   // Get top employee for selected period
   const topEmployee = dataStore.getTopEmployee(startDate, endDate);
 
-  // Mock data for charts (in real app, this would be calculated from actual data)
-  const revenueVsExpensesData = [
-    { month: 'Jan', revenue: 45000, expenses: 32000 },
-    { month: 'Feb', revenue: 52000, expenses: 35000 },
-    { month: 'Mar', revenue: 48000, expenses: 38000 },
-    { month: 'Apr', revenue: 61000, expenses: 42000 },
-    { month: 'May', revenue: 55000, expenses: 39000 },
-    { month: 'Jun', revenue: totalIncome, expenses: totalExpenses },
-  ];
+  // Generate revenue vs expenses data for the last 6 months
+  const generateRevenueVsExpensesData = () => {
+    const data = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    
+    for (let i = 5; i >= 0; i--) {
+      const now = new Date();
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStart = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      
+      const monthIncome = dataStore.getTotalIncome(monthStart, monthEnd);
+      const monthExpenses = dataStore.getTotalExpenses(monthStart, monthEnd);
+      
+      data.push({
+        month: months[5 - i] || date.toLocaleDateString('en-US', { month: 'short' }),
+        revenue: monthIncome || 0,
+        expenses: monthExpenses || 0
+      });
+    }
+    
+    return data;
+  };
+
+  const revenueVsExpensesData = generateRevenueVsExpensesData();
 
   // Get income by category
   const incomeTransactions = dataStore.getIncomeTransactions().filter(t => {
@@ -320,25 +341,31 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={incomeCategoryData}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis dataKey="name" className="text-xs fill-muted-foreground" />
-                    <YAxis 
-                      className="text-xs fill-muted-foreground"
-                      tickFormatter={(value) => `$${value / 1000}k`}
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'Amount']}
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {incomeCategoryData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={incomeCategoryData}>
+                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                      <XAxis dataKey="name" className="text-xs fill-muted-foreground" />
+                      <YAxis 
+                        className="text-xs fill-muted-foreground"
+                        tickFormatter={(value) => `$${value / 1000}k`}
+                      />
+                      <Tooltip 
+                        formatter={(value: number) => [`$${value.toLocaleString()}`, 'Amount']}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-muted-foreground">No income data for selected period</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -353,46 +380,54 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie 
-                      data={expenseCategoryData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={120}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {expenseCategoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'Amount']}
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4 space-y-2">
-                {expenseCategoryData.map((category, index) => (
-                  <div key={index} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: category.color }}
+                {expenseCategoryData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie 
+                        data={expenseCategoryData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={120}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {expenseCategoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number) => [`$${value.toLocaleString()}`, 'Amount']}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
                       />
-                      <span className="text-muted-foreground">{category.name}</span>
-                    </div>
-                    <span className="font-medium">${category.value.toLocaleString()}</span>
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-muted-foreground">No expense data for selected period</p>
                   </div>
-                ))}
+                )}
               </div>
+              {expenseCategoryData.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {expenseCategoryData.map((category, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: category.color }}
+                        />
+                        <span className="text-muted-foreground">{category.name}</span>
+                      </div>
+                      <span className="font-medium">${category.value.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -456,7 +491,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {topIncomeSources.map(([source, amount], index) => (
+                {topIncomeSources.length > 0 ? topIncomeSources.map(([source, amount], index) => (
                   <div key={source} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
@@ -466,7 +501,9 @@ export default function AnalyticsPage() {
                     </div>
                     <Badge variant="secondary">${amount.toLocaleString()}</Badge>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-center text-muted-foreground py-4">No income sources for selected period</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -480,7 +517,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {topExpenseCategories.map(([category, amount], index) => (
+                {topExpenseCategories.length > 0 ? topExpenseCategories.map(([category, amount], index) => (
                   <div key={category} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10 border border-destructive/20">
@@ -490,7 +527,9 @@ export default function AnalyticsPage() {
                     </div>
                     <Badge variant="destructive">${amount.toLocaleString()}</Badge>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-center text-muted-foreground py-4">No expense categories for selected period</p>
+                )}
               </div>
             </CardContent>
           </Card>
