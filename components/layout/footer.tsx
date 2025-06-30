@@ -67,7 +67,13 @@ export function Footer() {
             </p>
             <div className="flex space-x-6">
               {social.map((item) => (
-                <a key={item.name} href={item.href} className="text-muted-foreground hover:text-primary transition-colors">
+                <a 
+                  key={item.name} 
+                  href={item.href} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   <span className="sr-only">{item.name}</span>
                   <item.icon className="h-6 w-6" aria-hidden="true" />
                 </a>
