@@ -5,7 +5,7 @@ import { User } from '@supabase/supabase-js';
 import { mockAuth, type MockUser } from '@/lib/auth/mock-auth';
 import { getUserProfile } from '@/lib/supabase/auth';
 
-// Flag to enable/disable mock auth
+// Flag to enable/disable mock auth - set to true for deployment
 const USE_MOCK_AUTH = true;
 
 interface Profile {
@@ -94,70 +94,6 @@ export function useAuth() {
         subscription.unsubscribe();
       };
     } else {
-      // Original Supabase implementation (commented out for now)
-      /*
-      const getInitialSession = async () => {
-        try {
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            setAuthState(prev => ({ ...prev, error: error.message, loading: false }));
-            return;
-          }
-
-          if (session?.user) {
-            const profile = await getUserProfile(session.user.id);
-            setAuthState({
-              user: session.user,
-              profile,
-              loading: false,
-              error: null
-            });
-          } else {
-            setAuthState({
-              user: null,
-              profile: null,
-              loading: false,
-              error: null
-            });
-          }
-        } catch (error) {
-          setAuthState(prev => ({ 
-            ...prev, 
-            error: error instanceof Error ? error.message : 'An error occurred',
-            loading: false 
-          }));
-        }
-      };
-
-      getInitialSession();
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          if (session?.user) {
-            const profile = await getUserProfile(session.user.id);
-            setAuthState({
-              user: session.user,
-              profile,
-              loading: false,
-              error: null
-            });
-          } else {
-            setAuthState({
-              user: null,
-              profile: null,
-              loading: false,
-              error: null
-            });
-          }
-        }
-      );
-
-      return () => {
-        subscription.unsubscribe();
-      };
-      */
-      
       // Fallback when Supabase is disabled
       setAuthState({
         user: null,

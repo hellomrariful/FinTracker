@@ -36,15 +36,15 @@ export class MockAuth {
   private listeners: ((user: MockUser | null) => void)[] = [];
 
   constructor() {
-    // Load user from localStorage on initialization
+    // Load user from localStorage on initialization (only in browser)
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        try {
+      try {
+        const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (stored) {
           this.currentUser = JSON.parse(stored);
-        } catch (e) {
-          console.warn('Failed to parse stored auth user');
         }
+      } catch (e) {
+        console.warn('Failed to parse stored auth user');
       }
     }
   }
@@ -153,12 +153,16 @@ export class MockAuth {
   private setCurrentUser(user: MockUser | null) {
     this.currentUser = user;
     
-    // Store in localStorage
+    // Store in localStorage (only in browser)
     if (typeof window !== 'undefined') {
-      if (user) {
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-      } else {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
+      try {
+        if (user) {
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+        } else {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+        }
+      } catch (e) {
+        console.warn('Failed to store auth user');
       }
     }
 
