@@ -21,7 +21,7 @@ const stats = [
     value: '35%',
     icon: TrendingUp,
     description: 'Better financial decisions'
-  }
+  },
 ];
 
 export function StatsSection() {
@@ -37,21 +37,28 @@ export function StatsSection() {
               Join thousands of companies that have transformed their financial management with Fintracker.
             </p>
           </div>
-          <dl className="mt-16 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-3">
+          <dl className="mt-16 grid grid-cols-1 gap-8 overflow-hidden text-center sm:grid-cols-2 lg:grid-cols-3">
             {stats.map((stat) => (
-              <div key={stat.id} className="flex flex-col bg-muted/50 p-8 group hover:bg-muted/70 transition-colors">
-                <div className="flex items-center justify-center mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
-                    <stat.icon className="h-6 w-6 text-primary" />
+              <div key={stat.id} className="flex flex-col bg-muted/50 p-12 rounded-2xl group hover:bg-muted/70 transition-all duration-300 hover:shadow-lg border border-border/50">
+                {/* Icon at the top */}
+                <div className="flex items-center justify-center mb-8">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
+                    <stat.icon className="h-8 w-8 text-primary" />
                   </div>
                 </div>
-                <dt className="text-sm font-semibold leading-6 text-muted-foreground">
-                  {stat.name}
-                </dt>
-                <dd className="order-first text-3xl font-bold tracking-tight text-foreground">
+                
+                {/* Main value */}
+                <dd className="text-4xl font-bold tracking-tight text-foreground mb-4 group-hover:text-primary transition-colors duration-300">
                   {stat.value}
                 </dd>
-                <dd className="text-xs text-muted-foreground mt-2">
+                
+                {/* Title */}
+                <dt className="text-base font-semibold leading-6 text-foreground mb-3">
+                  {stat.name}
+                </dt>
+                
+                {/* Description */}
+                <dd className="text-sm text-muted-foreground leading-relaxed">
                   {stat.description}
                 </dd>
               </div>
