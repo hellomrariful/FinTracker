@@ -142,6 +142,28 @@ export function DashboardOverview() {
             Welcome back! Here's what's happening with your finances.
           </p>
         </div>
+       {/* Quick Add Button - moved to left side */}
+            <div className="flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/income?add=true">Add Income</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/expenses?add=true">Add Expense</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/assets?add=true">Add Asset</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
       </div>
 
       {/* Stats Cards */}
