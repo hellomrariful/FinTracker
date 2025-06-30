@@ -262,6 +262,11 @@ class DataStore {
       });
     }
 
+    // Return null if no transactions found
+    if (transactions.length === 0) {
+      return null;
+    }
+
     const employeeStats = transactions.reduce((acc, t) => {
       if (!acc[t.employeeId]) {
         acc[t.employeeId] = { income: 0, transactions: 0 };
@@ -271,11 +276,16 @@ class DataStore {
       return acc;
     }, {} as Record<string, { income: number; transactions: number }>);
 
-    const topEmployeeId = Object.keys(employeeStats).reduce((a, b) => 
+    const employeeIds = Object.keys(employeeStats);
+    
+    // Return null if no employee stats found
+    if (employeeIds.length === 0) {
+      return null;
+    }
+
+    const topEmployeeId = employeeIds.reduce((a, b) => 
       employeeStats[a].income > employeeStats[b].income ? a : b
     );
-
-    if (!topEmployeeId) return null;
 
     const employee = this.employees.find(e => e.id === topEmployeeId);
     if (!employee) return null;
