@@ -36,12 +36,12 @@ const social = [
   },
   {
     name: 'GitHub',
-    href: '#',
+    href: 'https://github.com/hellomrariful',
     icon: Github,
   },
   {
     name: 'LinkedIn',
-    href: '#',
+    href: 'https://www.linkedin.com/in/hellomrariful/',
     icon: Linkedin,
   },
 ];
