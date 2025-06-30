@@ -16,32 +16,64 @@ import {
   Calendar
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsePieChart, Cell } from 'recharts';
+import { dataStore } from '@/lib/data-store';
+import Link from 'next/link';
 
-// Mock data
+// Calculate current month data
+const now = new Date();
+const currentMonth = now.getMonth();
+const currentYear = now.getFullYear();
+const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
+const endOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
+
+const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1).toISOString().split('T')[0];
+const endOfLastMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
+
+// Get data from store
+const totalIncome = dataStore.getTotalIncome();
+const totalExpenses = dataStore.getTotalExpenses();
+const currentMonthIncome = dataStore.getTotalIncome(startOfMonth, endOfMonth);
+const currentMonthExpenses = dataStore.getTotalExpenses(startOfMonth, endOfMonth);
+const lastMonthIncome = dataStore.getTotalIncome(startOfLastMonth, endOfLastMonth);
+const lastMonthExpenses = dataStore.getTotalExpenses(startOfLastMonth, endOfLastMonth);
+
+const netProfit = currentMonthIncome - currentMonthExpenses;
+const profitMargin = currentMonthIncome > 0 ? (netProfit / currentMonthIncome) * 100 : 0;
+
+// Calculate growth percentages
+const incomeGrowth = lastMonthIncome > 0 ? ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0;
+const expenseGrowth = lastMonthExpenses > 0 ? ((currentMonthExpenses - lastMonthExpenses) / lastMonthExpenses) * 100 : 0;
+const profitGrowth = lastMonthIncome - lastMonthExpenses > 0 ? ((netProfit - (lastMonthIncome - lastMonthExpenses)) / (lastMonthIncome - lastMonthExpenses)) * 100 : 0;
+
+// Mock data for charts
 const revenueData = [
   { month: 'Jan', revenue: 45000, expenses: 32000 },
   { month: 'Feb', revenue: 52000, expenses: 35000 },
   { month: 'Mar', revenue: 48000, expenses: 38000 },
   { month: 'Apr', revenue: 61000, expenses: 42000 },
   { month: 'May', revenue: 55000, expenses: 39000 },
-  { month: 'Jun', revenue: 67000, expenses: 44000 },
+  { month: 'Jun', revenue: currentMonthIncome, expenses: currentMonthExpenses },
 ];
 
-const categoryData = [
-  { name: 'Software', value: 35, color: 'hsl(var(--chart-1))' },
-  { name: 'Marketing', value: 25, color: 'hsl(var(--chart-2))' },
-  { name: 'Operations', value: 20, color: 'hsl(var(--chart-3))' },
-  { name: 'Travel', value: 15, color: 'hsl(var(--chart-4))' },
-  { name: 'Other', value: 5, color: 'hsl(var(--chart-5))' },
-];
+// Get expense breakdown by category
+const expenseTransactions = dataStore.getExpenseTransactions();
+const expenseByCategory = expenseTransactions.reduce((acc, transaction) => {
+  acc[transaction.category] = (acc[transaction.category] || 0) + transaction.amount;
+  return acc;
+}, {} as Record<string, number>);
 
-const recentTransactions = [
-  { id: 1, description: 'Stripe Payment', amount: 2500, type: 'income', date: '2024-01-15' },
-  { id: 2, description: 'AWS Services', amount: -89, type: 'expense', date: '2024-01-14' },
-  { id: 3, description: 'Client Payment', amount: 5000, type: 'income', date: '2024-01-14' },
-  { id: 4, description: 'Office Supplies', amount: -156, type: 'expense', date: '2024-01-13' },
-  { id: 5, description: 'Consulting Fee', amount: 3200, type: 'income', date: '2024-01-12' },
-];
+const categoryData = Object.entries(expenseByCategory).map(([name, value], index) => ({
+  name,
+  value: Math.round((value / totalExpenses) * 100),
+  amount: value,
+  color: `hsl(var(--chart-${(index % 5) + 1}))`
+}));
+
+// Get recent transactions
+const allTransactions = [
+  ...dataStore.getIncomeTransactions().map(t => ({ ...t, type: 'income' as const })),
+  ...dataStore.getExpenseTransactions().map(t => ({ ...t, type: 'expense' as const, amount: -t.amount }))
+].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
 export function DashboardOverview() {
   return (
@@ -59,10 +91,12 @@ export function DashboardOverview() {
             <Calendar className="mr-2 h-4 w-4" />
             This Month
           </Button>
-          <Button size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Transaction
-          </Button>
+          <Link href="/dashboard/income?add=true">
+            <Button size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Transaction
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -74,10 +108,14 @@ export function DashboardOverview() {
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">$67,234</div>
-            <div className="flex items-center text-xs text-accent mt-1">
-              <ArrowUpRight className="mr-1 h-3 w-3" />
-              12.5% from last month
+            <div className="text-2xl font-bold text-primary">${currentMonthIncome.toLocaleString()}</div>
+            <div className={`flex items-center text-xs mt-1 ${incomeGrowth >= 0 ? 'text-accent' : 'text-destructive'}`}>
+              {incomeGrowth >= 0 ? (
+                <ArrowUpRight className="mr-1 h-3 w-3" />
+              ) : (
+                <ArrowDownRight className="mr-1 h-3 w-3" />
+              )}
+              {Math.abs(incomeGrowth).toFixed(1)}% from last month
             </div>
           </CardContent>
         </Card>
@@ -88,10 +126,14 @@ export function DashboardOverview() {
             <CreditCard className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">$44,129</div>
-            <div className="flex items-center text-xs text-destructive mt-1">
-              <ArrowUpRight className="mr-1 h-3 w-3" />
-              8.2% from last month
+            <div className="text-2xl font-bold text-accent">${currentMonthExpenses.toLocaleString()}</div>
+            <div className={`flex items-center text-xs mt-1 ${expenseGrowth <= 0 ? 'text-accent' : 'text-destructive'}`}>
+              {expenseGrowth >= 0 ? (
+                <ArrowUpRight className="mr-1 h-3 w-3" />
+              ) : (
+                <ArrowDownRight className="mr-1 h-3 w-3" />
+              )}
+              {Math.abs(expenseGrowth).toFixed(1)}% from last month
             </div>
           </CardContent>
         </Card>
@@ -102,10 +144,14 @@ export function DashboardOverview() {
             <TrendingUp className="h-4 w-4 text-chart-3" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-chart-3">$23,105</div>
-            <div className="flex items-center text-xs text-accent mt-1">
-              <ArrowUpRight className="mr-1 h-3 w-3" />
-              18.3% from last month
+            <div className="text-2xl font-bold text-chart-3">${netProfit.toLocaleString()}</div>
+            <div className={`flex items-center text-xs mt-1 ${profitGrowth >= 0 ? 'text-accent' : 'text-destructive'}`}>
+              {profitGrowth >= 0 ? (
+                <ArrowUpRight className="mr-1 h-3 w-3" />
+              ) : (
+                <ArrowDownRight className="mr-1 h-3 w-3" />
+              )}
+              {Math.abs(profitGrowth).toFixed(1)}% from last month
             </div>
           </CardContent>
         </Card>
@@ -116,10 +162,10 @@ export function DashboardOverview() {
             <Target className="h-4 w-4 text-chart-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-chart-4">34.4%</div>
+            <div className="text-2xl font-bold text-chart-4">{profitMargin.toFixed(1)}%</div>
             <div className="flex items-center text-xs text-accent mt-1">
               <ArrowUpRight className="mr-1 h-3 w-3" />
-              2.1% from last month
+              Healthy margin
             </div>
           </CardContent>
         </Card>
@@ -204,7 +250,7 @@ export function DashboardOverview() {
                     ))}
                   </RechartsePieChart>
                   <Tooltip 
-                    formatter={(value: number) => [`${value}%`, 'Percentage']}
+                    formatter={(value: number, name: string, props: any) => [`${value}% ($${props.payload.amount.toLocaleString()})`, 'Share']}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
@@ -244,7 +290,7 @@ export function DashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentTransactions.map((transaction) => (
+              {allTransactions.map((transaction) => (
                 <div key={transaction.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
@@ -259,7 +305,7 @@ export function DashboardOverview() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">{transaction.description}</p>
+                      <p className="font-medium text-foreground">{transaction.name}</p>
                       <p className="text-sm text-muted-foreground">{transaction.date}</p>
                     </div>
                   </div>
@@ -272,9 +318,11 @@ export function DashboardOverview() {
               ))}
             </div>
             <div className="mt-6">
-              <Button variant="outline" className="w-full">
-                View All Transactions
-              </Button>
+              <Link href="/dashboard/analytics">
+                <Button variant="outline" className="w-full">
+                  View All Transactions
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -291,28 +339,28 @@ export function DashboardOverview() {
             <div>
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-muted-foreground">Revenue Goal</span>
-                <span className="font-medium">$67k / $80k</span>
+                <span className="font-medium">${currentMonthIncome.toLocaleString()} / $80k</span>
               </div>
-              <Progress value={84} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">84% complete</p>
+              <Progress value={(currentMonthIncome / 80000) * 100} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-1">{Math.round((currentMonthIncome / 80000) * 100)}% complete</p>
             </div>
             
             <div>
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-muted-foreground">Expense Budget</span>
-                <span className="font-medium">$44k / $50k</span>
+                <span className="font-medium">${currentMonthExpenses.toLocaleString()} / $50k</span>
               </div>
-              <Progress value={88} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">88% used</p>
+              <Progress value={(currentMonthExpenses / 50000) * 100} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-1">{Math.round((currentMonthExpenses / 50000) * 100)}% used</p>
             </div>
             
             <div>
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-muted-foreground">Profit Target</span>
-                <span className="font-medium">$23k / $30k</span>
+                <span className="font-medium">${netProfit.toLocaleString()} / $30k</span>
               </div>
-              <Progress value={77} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">77% achieved</p>
+              <Progress value={(netProfit / 30000) * 100} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-1">{Math.round((netProfit / 30000) * 100)}% achieved</p>
             </div>
 
             <div className="pt-4 border-t border-border">

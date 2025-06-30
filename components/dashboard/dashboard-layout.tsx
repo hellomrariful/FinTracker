@@ -11,13 +11,15 @@ import {
   CreditCard, 
   DollarSign, 
   PieChart, 
-  Users, 
+  Package, 
   Settings,
   Bell,
   Search,
-  User
+  User,
+  Plus
 } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   DropdownMenu, 
@@ -31,12 +33,12 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home, current: true },
-  { name: 'Income', href: '/dashboard/income', icon: DollarSign, current: false },
-  { name: 'Expenses', href: '/dashboard/expenses', icon: CreditCard, current: false },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart, current: false },
-  { name: 'Team', href: '/dashboard/team', icon: Users, current: false },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings, current: false },
+  { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Income', href: '/dashboard/income', icon: DollarSign },
+  { name: 'Expenses', href: '/dashboard/expenses', icon: CreditCard },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart },
+  { name: 'Assets', href: '/dashboard/assets', icon: Package },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
 interface DashboardLayoutProps {
@@ -45,6 +47,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,7 +81,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     href={item.href}
                     className={cn(
                       'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors',
-                      item.current
+                      pathname === item.href
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                     )}
@@ -114,7 +117,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         href={item.href}
                         className={cn(
                           'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors',
-                          item.current
+                          pathname === item.href
                             ? 'bg-primary text-primary-foreground'
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                         )}
@@ -155,13 +158,34 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Input
                 id="search-field"
                 className="block h-full w-full border-0 py-0 pl-10 pr-0 text-foreground placeholder:text-muted-foreground focus:ring-0 sm:text-sm bg-transparent"
-                placeholder="Search transactions..."
+                placeholder="Search transactions, assets..."
                 type="search"
                 name="search"
               />
             </form>
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <ThemeToggle />
+
+              {/* Quick Add Button */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/income?add=true">Add Income</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/expenses?add=true">Add Expense</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/assets?add=true">Add Asset</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Notifications */}
               <Button variant="ghost" size="icon" className="relative">
@@ -189,22 +213,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">John Doe</p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        john@example.com
+                        demo@fintracker.com
                       </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/settings">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/settings">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <span>Log out</span>
+                  <DropdownMenuItem asChild>
+                    <Link href="/auth/signin">
+                      <span>Log out</span>
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
