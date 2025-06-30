@@ -12,8 +12,7 @@ import {
   Plus,
   ArrowUpRight,
   ArrowDownRight,
-  Target,
-  Calendar
+  Target
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsePieChart, Cell } from 'recharts';
 import { dataStore } from '@/lib/data-store';
@@ -86,11 +85,7 @@ export function DashboardOverview() {
             Welcome back! Here's what's happening with your finances.
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 flex gap-3">
-          <Button variant="outline" size="sm">
-            <Calendar className="mr-2 h-4 w-4" />
-            This Month
-          </Button>
+        <div className="mt-4 sm:mt-0">
           <Link href="/dashboard/income?add=true">
             <Button size="sm">
               <Plus className="mr-2 h-4 w-4" />
