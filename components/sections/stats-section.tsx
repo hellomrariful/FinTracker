@@ -1,4 +1,4 @@
-import { TrendingUp, Users, DollarSign, Award } from 'lucide-react';
+import { TrendingUp, Users, DollarSign } from 'lucide-react';
 
 const stats = [
   { 
@@ -21,14 +21,7 @@ const stats = [
     value: '35%',
     icon: TrendingUp,
     description: 'Better financial decisions'
-  },
-  { 
-    id: 4, 
-    name: 'Customer satisfaction', 
-    value: '99.8%',
-    icon: Award,
-    description: 'Award-winning support'
-  },
+  }
 ];
 
 export function StatsSection() {
@@ -44,7 +37,7 @@ export function StatsSection() {
               Join thousands of companies that have transformed their financial management with Fintracker.
             </p>
           </div>
-          <dl className="mt-16 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4">
+          <dl className="mt-16 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-3">
             {stats.map((stat) => (
               <div key={stat.id} className="flex flex-col bg-muted/50 p-8 group hover:bg-muted/70 transition-colors">
                 <div className="flex items-center justify-center mb-4">
