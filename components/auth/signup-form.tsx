@@ -42,8 +42,8 @@ export function SignupForm() {
       }
 
       if (user) {
-        toast.success('Account created successfully! Please check your email to verify your account.');
-        router.push('/auth/signin');
+        toast.success('Account created successfully! You are now signed in.');
+        router.push('/dashboard');
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
@@ -66,13 +66,14 @@ export function SignupForm() {
         </p>
       </div>
 
-      {/* Demo Credentials Banner */}
+      {/* Demo Mode Banner */}
       <div className="mt-6 bg-primary/10 border border-primary/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
           <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-primary mb-2">Demo Account Available</h3>
+            <h3 className="text-sm font-semibold text-primary mb-2">Demo Mode Active</h3>
             <div className="space-y-1 text-sm text-foreground">
+              <div><strong>Any information works!</strong> Or use the demo account:</div>
               <div><strong>Email:</strong> demo@fintracker.com</div>
               <div><strong>Password:</strong> fintracker123</div>
             </div>
@@ -149,7 +150,7 @@ export function SignupForm() {
                 autoComplete="new-password"
                 required
                 className="pr-10"
-                placeholder="Create a strong password"
+                placeholder="Create a password"
               />
               <button
                 type="button"
@@ -164,7 +165,7 @@ export function SignupForm() {
               </button>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Must be at least 8 characters with letters and numbers
+              Any password works in demo mode
             </p>
           </div>
         </div>

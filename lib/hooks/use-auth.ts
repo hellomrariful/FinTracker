@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
+import { mockAuth, type MockUser } from '@/lib/auth/mock-auth';
 import { getUserProfile } from '@/lib/supabase/auth';
+
+// Flag to enable/disable mock auth
+const USE_MOCK_AUTH = true;
 
 interface Profile {
   id: string;
@@ -17,7 +20,7 @@ interface Profile {
 }
 
 interface AuthState {
-  user: User | null;
+  user: User | MockUser | null;
   profile: Profile | null;
   loading: boolean;
   error: string | null;
@@ -32,68 +35,137 @@ export function useAuth() {
   });
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          setAuthState(prev => ({ ...prev, error: error.message, loading: false }));
-          return;
+    if (USE_MOCK_AUTH) {
+      // Mock auth implementation
+      const getInitialSession = async () => {
+        try {
+          const { data: { session } } = await mockAuth.getSession();
+          
+          if (session?.user) {
+            const profile = await getUserProfile(session.user.id);
+            setAuthState({
+              user: session.user,
+              profile,
+              loading: false,
+              error: null
+            });
+          } else {
+            setAuthState({
+              user: null,
+              profile: null,
+              loading: false,
+              error: null
+            });
+          }
+        } catch (error) {
+          setAuthState(prev => ({ 
+            ...prev, 
+            error: error instanceof Error ? error.message : 'An error occurred',
+            loading: false 
+          }));
         }
+      };
 
-        if (session?.user) {
-          const profile = await getUserProfile(session.user.id);
-          setAuthState({
-            user: session.user,
-            profile,
-            loading: false,
-            error: null
-          });
-        } else {
-          setAuthState({
-            user: null,
-            profile: null,
-            loading: false,
-            error: null
-          });
+      getInitialSession();
+
+      // Listen for auth changes
+      const { data: { subscription } } = mockAuth.onAuthStateChange(
+        async (event, session) => {
+          if (session?.user) {
+            const profile = await getUserProfile(session.user.id);
+            setAuthState({
+              user: session.user,
+              profile,
+              loading: false,
+              error: null
+            });
+          } else {
+            setAuthState({
+              user: null,
+              profile: null,
+              loading: false,
+              error: null
+            });
+          }
         }
-      } catch (error) {
-        setAuthState(prev => ({ 
-          ...prev, 
-          error: error instanceof Error ? error.message : 'An error occurred',
-          loading: false 
-        }));
-      }
-    };
+      );
 
-    getInitialSession();
+      return () => {
+        subscription.unsubscribe();
+      };
+    } else {
+      // Original Supabase implementation (commented out for now)
+      /*
+      const getInitialSession = async () => {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            setAuthState(prev => ({ ...prev, error: error.message, loading: false }));
+            return;
+          }
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          const profile = await getUserProfile(session.user.id);
-          setAuthState({
-            user: session.user,
-            profile,
-            loading: false,
-            error: null
-          });
-        } else {
-          setAuthState({
-            user: null,
-            profile: null,
-            loading: false,
-            error: null
-          });
+          if (session?.user) {
+            const profile = await getUserProfile(session.user.id);
+            setAuthState({
+              user: session.user,
+              profile,
+              loading: false,
+              error: null
+            });
+          } else {
+            setAuthState({
+              user: null,
+              profile: null,
+              loading: false,
+              error: null
+            });
+          }
+        } catch (error) {
+          setAuthState(prev => ({ 
+            ...prev, 
+            error: error instanceof Error ? error.message : 'An error occurred',
+            loading: false 
+          }));
         }
-      }
-    );
+      };
 
-    return () => {
-      subscription.unsubscribe();
-    };
+      getInitialSession();
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (session?.user) {
+            const profile = await getUserProfile(session.user.id);
+            setAuthState({
+              user: session.user,
+              profile,
+              loading: false,
+              error: null
+            });
+          } else {
+            setAuthState({
+              user: null,
+              profile: null,
+              loading: false,
+              error: null
+            });
+          }
+        }
+      );
+
+      return () => {
+        subscription.unsubscribe();
+      };
+      */
+      
+      // Fallback when Supabase is disabled
+      setAuthState({
+        user: null,
+        profile: null,
+        loading: false,
+        error: 'Supabase auth disabled'
+      });
+    }
   }, []);
 
   return authState;
