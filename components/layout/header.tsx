@@ -57,7 +57,7 @@ export function Header() {
           </Link>
           <Link href="/auth/signup">
             <Button size="sm">
-              Get Started
+              Try for Free
             </Button>
           </Link>
         </div>
