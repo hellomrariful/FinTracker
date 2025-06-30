@@ -72,9 +72,9 @@ export function SigninForm() {
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-primary mb-2">Demo Mode Active</h3>
             <div className="space-y-1 text-sm text-foreground">
-              <div key="demo-text-1"><strong>Any credentials work!</strong> Try the demo account:</div>
-              <div key="demo-text-2"><strong>Email:</strong> demo@fintracker.com</div>
-              <div key="demo-text-3"><strong>Password:</strong> fintracker123</div>
+              <div key="signin-form-demo-line-1"><strong>Any credentials work!</strong> Try the demo account:</div>
+              <div key="signin-form-demo-line-2"><strong>Email:</strong> demo@fintracker.com</div>
+              <div key="signin-form-demo-line-3"><strong>Password:</strong> fintracker123</div>
             </div>
             <Button 
               type="button" 
