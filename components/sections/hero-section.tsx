@@ -24,7 +24,7 @@ export function HeroSection() {
           {/* Headline */}
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
             Smart Financial 
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent py-[1px]">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent py-[5px]">
               Management
             </span>
             for Digital Businesses
