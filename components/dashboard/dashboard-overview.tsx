@@ -245,6 +245,62 @@ export function DashboardOverview() {
         </Card>
       </div>
 
+    
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Revenue Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue vs Expenses</CardTitle>
+            <CardDescription>
+              Monthly comparison of income and expenses
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis 
+                    dataKey="month" 
+                    className="text-xs fill-muted-foreground"
+                  />
+                  <YAxis 
+                    className="text-xs fill-muted-foreground"
+                    tickFormatter={(value) => `$${value / 1000}k`}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stackId="1"
+                    stroke="hsl(var(--primary))" 
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.6}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="expenses" 
+                    stackId="2"
+                    stroke="hsl(var(--accent))" 
+                    fill="hsl(var(--accent))"
+                    fillOpacity={0.6}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Expense Categories */}
         <Card>
           <CardHeader>
