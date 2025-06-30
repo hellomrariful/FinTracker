@@ -30,7 +30,7 @@ import {
   Crown,
   Users
 } from 'lucide-react';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsePieChart, Cell } from 'recharts';
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { dataStore } from '@/lib/data-store';
 import Link from 'next/link';
 
@@ -86,12 +86,17 @@ const expenseByCategory = expenseTransactions.reduce((acc, transaction) => {
   return acc;
 }, {} as Record<string, number>);
 
-const categoryData = Object.entries(expenseByCategory).map(([name, value], index) => ({
-  name,
-  value: Math.round((value / totalExpenses) * 100),
-  amount: value,
-  color: `hsl(var(--chart-${(index % 5) + 1}))`
-}));
+// Create spider chart data
+const spiderChartData = Object.entries(expenseByCategory).map(([name, value]) => {
+  const maxValue = Math.max(...Object.values(expenseByCategory));
+  return {
+    category: name,
+    amount: value,
+    percentage: Math.round((value / totalExpenses) * 100),
+    normalized: Math.round((value / maxValue) * 100), // Normalize for spider chart
+    color: `hsl(var(--chart-${(Object.keys(expenseByCategory).indexOf(name) % 5) + 1}))`
+  };
+});
 
 // Get recent transactions
 const allTransactions = [
@@ -301,53 +306,117 @@ export function DashboardOverview() {
           </CardContent>
         </Card>
 
-        {/* Expense Categories */}
+        {/* Expense Categories Spider Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Expense Categories</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-primary" />
+              Expense Categories Analysis
+            </CardTitle>
             <CardDescription>
-              Breakdown of expenses by category
+              Multi-dimensional view of spending patterns
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80 flex items-center justify-center">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsePieChart>
-                  <RechartsePieChart 
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={120}
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </RechartsePieChart>
+                <RadarChart data={spiderChartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                  <PolarGrid 
+                    stroke="hsl(var(--border))" 
+                    strokeOpacity={0.3}
+                    radialLines={true}
+                  />
+                  <PolarAngleAxis 
+                    dataKey="category" 
+                    tick={{ 
+                      fontSize: 12, 
+                      fill: 'hsl(var(--muted-foreground))',
+                      fontWeight: 500
+                    }}
+                    className="text-xs"
+                  />
+                  <PolarRadiusAxis 
+                    angle={90} 
+                    domain={[0, 100]} 
+                    tick={{ 
+                      fontSize: 10, 
+                      fill: 'hsl(var(--muted-foreground))',
+                      opacity: 0.7
+                    }}
+                    tickCount={5}
+                  />
+                  <Radar
+                    name="Expense Distribution"
+                    dataKey="normalized"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.15}
+                    strokeWidth={3}
+                    dot={{ 
+                      r: 6, 
+                      fill: 'hsl(var(--primary))',
+                      stroke: 'hsl(var(--background))',
+                      strokeWidth: 2
+                    }}
+                  />
+                  <Radar
+                    name="Budget Utilization"
+                    dataKey="percentage"
+                    stroke="hsl(var(--accent))"
+                    fill="hsl(var(--accent))"
+                    fillOpacity={0.1}
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={{ 
+                      r: 4, 
+                      fill: 'hsl(var(--accent))',
+                      stroke: 'hsl(var(--background))',
+                      strokeWidth: 1
+                    }}
+                  />
                   <Tooltip 
-                    formatter={(value: number, name: string, props: any) => [`${value}% ($${props.payload.amount.toLocaleString()})`, 'Share']}
+                    formatter={(value: number, name: string, props: any) => {
+                      if (name === 'Expense Distribution') {
+                        return [`$${props.payload.amount.toLocaleString()}`, 'Amount'];
+                      }
+                      return [`${value}%`, 'Share'];
+                    }}
+                    labelFormatter={(label) => `Category: ${label}`}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
                     }}
                   />
-                </RechartsePieChart>
+                </RadarChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-4 space-y-2">
-              {categoryData.map((category, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: category.color }}
-                    />
-                    <span className="text-muted-foreground">{category.name}</span>
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-primary"></div>
+                  Expense Distribution
+                </h4>
+                {spiderChartData.slice(0, 3).map((category, index) => (
+                  <div key={index} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{category.category}</span>
+                    <span className="font-medium">${category.amount.toLocaleString()}</span>
                   </div>
-                  <span className="font-medium">{category.value}%</span>
-                </div>
-              ))}
+                ))}
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-accent border-2 border-dashed border-accent"></div>
+                  Category Share
+                </h4>
+                {spiderChartData.slice(0, 3).map((category, index) => (
+                  <div key={index} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{category.category}</span>
+                    <span className="font-medium">{category.percentage}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
