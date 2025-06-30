@@ -19,7 +19,8 @@ import {
   Medal,
   Award,
   Star,
-  Crown
+  Crown,
+  Users
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsePieChart, Cell } from 'recharts';
 import { dataStore } from '@/lib/data-store';
