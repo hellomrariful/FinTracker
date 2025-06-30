@@ -32,15 +32,20 @@ export default function AssetsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [isMounted, setIsMounted] = useState(false);
   
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     setAssets(dataStore.getAssets());
-    if (searchParams.get('add') === 'true') {
+    if (isMounted && searchParams.get('add') === 'true') {
       setIsAddDialogOpen(true);
     }
-  }, [searchParams]);
+  }, [searchParams, isMounted]);
 
   // Calculate totals
   const physicalAssets = assets.filter(a => a.category === 'physical');

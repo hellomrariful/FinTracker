@@ -34,15 +34,20 @@ export default function IncomePage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<IncomeTransaction | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     setIncomeTransactions(dataStore.getIncomeTransactions());
-    if (searchParams.get('add') === 'true') {
+    if (isMounted && searchParams.get('add') === 'true') {
       setIsAddDialogOpen(true);
     }
-  }, [searchParams]);
+  }, [searchParams, isMounted]);
 
   // Calculate stats
   const now = new Date();
