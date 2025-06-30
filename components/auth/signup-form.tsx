@@ -86,9 +86,9 @@ export function SignupForm() {
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-primary mb-2">Demo Mode Active</h3>
             <div className="space-y-1 text-sm text-foreground">
-              <div key="signup-demo-text-1"><strong>Any information works!</strong> Or use the demo account:</div>
-              <div key="signup-demo-text-2"><strong>Email:</strong> demo@fintracker.com</div>
-              <div key="signup-demo-text-3"><strong>Password:</strong> fintracker123</div>
+              <div><strong>Any information works!</strong> Or use the demo account:</div>
+              <div><strong>Email:</strong> demo@fintracker.com</div>
+              <div><strong>Password:</strong> fintracker123</div>
             </div>
             <Link href="/auth/signin">
               <Button 
