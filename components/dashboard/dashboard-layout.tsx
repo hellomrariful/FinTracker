@@ -14,7 +14,6 @@ import {
   Package, 
   Settings,
   Bell,
-  Search,
   User,
   Plus
 } from 'lucide-react';
@@ -29,7 +28,6 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 const navigation = [
@@ -149,20 +147,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Separator */}
           <div className="h-6 w-px bg-border lg:hidden" aria-hidden="true" />
 
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <form className="relative flex flex-1" action="#" method="GET">
-              <label htmlFor="search-field" className="sr-only">
-                Search
-              </label>
-              <Search className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-muted-foreground pl-3" />
-              <Input
-                id="search-field"
-                className="block h-full w-full border-0 py-0 pl-10 pr-0 text-foreground placeholder:text-muted-foreground focus:ring-0 sm:text-sm bg-transparent"
-                placeholder="Search transactions, assets..."
-                type="search"
-                name="search"
-              />
-            </form>
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 justify-end">
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <ThemeToggle />
 
