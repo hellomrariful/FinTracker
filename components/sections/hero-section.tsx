@@ -1,10 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { VideoModal } from '@/components/ui/video-modal';
 import { ArrowRight, Play, TrendingUp, Shield, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 export function HeroSection() {
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  const handleWatchDemo = () => {
+    setIsVideoModalOpen(true);
+  };
+
   return (
     <div className="relative overflow-hidden bg-background pt-14">
       {/* Background Elements */}
@@ -47,7 +55,12 @@ export function HeroSection() {
                 <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 transition-opacity group-hover:opacity-100" />
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="group px-8 py-4 text-lg font-semibold">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="group px-8 py-4 text-lg font-semibold"
+              onClick={handleWatchDemo}
+            >
               <Play className="mr-2 h-5 w-5 transition-transform group-hover:scale-110" />
               Watch Demo
             </Button>
@@ -112,6 +125,14 @@ export function HeroSection() {
           </div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      <VideoModal
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        videoUrl="https://www.youtube.com/watch?v=ZK-rNEhJIDs&ab_channel=WhataStory%7CSaaS%26TechProductVideoExperts"
+        title="Fintracker Demo Video"
+      />
     </div>
   );
 }
