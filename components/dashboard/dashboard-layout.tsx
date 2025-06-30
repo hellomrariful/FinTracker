@@ -147,11 +147,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Separator */}
           <div className="h-6 w-px bg-border lg:hidden" aria-hidden="true" />
 
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 justify-end">
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
-              <ThemeToggle />
-
-              {/* Quick Add Button */}
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            {/* Quick Add Button - moved to left side */}
+            <div className="flex items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" className="gap-2">
@@ -159,7 +157,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     Add
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="start">
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard/income?add=true">Add Income</Link>
                   </DropdownMenuItem>
@@ -171,6 +169,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
+
+            {/* Right side items */}
+            <div className="flex flex-1 items-center justify-end gap-x-4 lg:gap-x-6">
+              <ThemeToggle />
 
               {/* Notifications */}
               <Button variant="ghost" size="icon" className="relative">
