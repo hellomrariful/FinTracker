@@ -48,6 +48,10 @@ export default function SettingsPage() {
     const employeeData = {
       name: formData.get('name') as string,
       role: formData.get('role') as string,
+      department: formData.get('department') as string,
+      hireDate: formData.get('hireDate') as string,
+      salary: parseFloat(formData.get('salary') as string) || 0,
+      performance: parseFloat(formData.get('performance') as string) || 0,
       avatar: formData.get('avatar') as string || undefined,
     };
 
@@ -124,6 +128,57 @@ export default function SettingsPage() {
           name="role"
           defaultValue={employee?.role}
           placeholder="Software Engineer"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="department">Department</Label>
+        <Input
+          id="department"
+          name="department"
+          defaultValue={employee?.department}
+          placeholder="Engineering"
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="hireDate">Hire Date</Label>
+          <Input
+            id="hireDate"
+            name="hireDate"
+            type="date"
+            defaultValue={employee?.hireDate || new Date().toISOString().split('T')[0]}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="salary">Salary</Label>
+          <Input
+            id="salary"
+            name="salary"
+            type="number"
+            min="0"
+            step="1000"
+            defaultValue={employee?.salary || 0}
+            placeholder="50000"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="performance">Performance Score (0-100)</Label>
+        <Input
+          id="performance"
+          name="performance"
+          type="number"
+          min="0"
+          max="100"
+          defaultValue={employee?.performance || 0}
+          placeholder="85"
           required
         />
       </div>
@@ -339,7 +394,7 @@ export default function SettingsPage() {
                       Add Employee
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>Add New Employee</DialogTitle>
                       <DialogDescription>
@@ -357,6 +412,8 @@ export default function SettingsPage() {
                       <TableRow>
                         <TableHead>Employee</TableHead>
                         <TableHead>Role</TableHead>
+                        <TableHead>Department</TableHead>
+                        <TableHead>Salary</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -375,6 +432,8 @@ export default function SettingsPage() {
                             </div>
                           </TableCell>
                           <TableCell>{employee.role}</TableCell>
+                          <TableCell>{employee.department}</TableCell>
+                          <TableCell>${employee.salary.toLocaleString()}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
                               <Dialog>
@@ -387,7 +446,7 @@ export default function SettingsPage() {
                                     <Edit className="h-4 w-4" />
                                   </Button>
                                 </DialogTrigger>
-                                <DialogContent>
+                                <DialogContent className="max-w-2xl">
                                   <DialogHeader>
                                     <DialogTitle>Edit Employee</DialogTitle>
                                     <DialogDescription>
