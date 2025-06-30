@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { BarChart3, Eye, EyeOff, Info } from 'lucide-react';
+import { BarChart3, Eye, EyeOff, Info, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { signUp } from '@/lib/supabase/auth';
@@ -66,8 +66,21 @@ export function SignupForm() {
         </p>
       </div>
 
+      {/* Judging Process Notice */}
+      <div className="mt-6 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-200 mb-1">Judging Process Notice</h3>
+            <p className="text-sm text-orange-700 dark:text-orange-300">
+              For the judging process, we have temporarily stopped user validation. Any information will work to create an account.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Demo Mode Banner */}
-      <div className="mt-6 bg-primary/10 border border-primary/20 rounded-lg p-4">
+      <div className="mt-4 bg-primary/10 border border-primary/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
           <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
           <div className="flex-1">
