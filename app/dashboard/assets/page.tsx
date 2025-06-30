@@ -70,6 +70,7 @@ export default function AssetsPage() {
       subCategory: formData.get('subCategory') as string || undefined,
       purchaseDate: formData.get('purchaseDate') as string,
       purchasePrice: parseFloat(formData.get('purchasePrice') as string),
+      condition: formData.get('condition') as 'excellent' | 'good' | 'fair' | 'poor',
       notes: formData.get('notes') as string || undefined,
     };
 
@@ -133,6 +134,23 @@ export default function AssetsPage() {
           />
         </div>
         <div className="space-y-2">
+          <Label htmlFor="condition">Condition</Label>
+          <Select name="condition" defaultValue={asset?.condition}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select condition" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="excellent">Excellent</SelectItem>
+              <SelectItem value="good">Good</SelectItem>
+              <SelectItem value="fair">Fair</SelectItem>
+              <SelectItem value="poor">Poor</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
           <Label htmlFor="purchasePrice">Purchase Price</Label>
           <Input
             id="purchasePrice"
@@ -144,17 +162,16 @@ export default function AssetsPage() {
             required
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="purchaseDate">Purchase Date</Label>
-        <Input
-          id="purchaseDate"
-          name="purchaseDate"
-          type="date"
-          defaultValue={asset?.purchaseDate}
-          required
-        />
+        <div className="space-y-2">
+          <Label htmlFor="purchaseDate">Purchase Date</Label>
+          <Input
+            id="purchaseDate"
+            name="purchaseDate"
+            type="date"
+            defaultValue={asset?.purchaseDate}
+            required
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -175,6 +192,21 @@ export default function AssetsPage() {
       </DialogFooter>
     </form>
   );
+
+  const getConditionBadge = (condition: string) => {
+    const variants = {
+      excellent: 'default',
+      good: 'secondary',
+      fair: 'outline',
+      poor: 'destructive'
+    } as const;
+    
+    return (
+      <Badge variant={variants[condition as keyof typeof variants] || 'outline'}>
+        {condition.charAt(0).toUpperCase() + condition.slice(1)}
+      </Badge>
+    );
+  };
 
   return (
     <DashboardLayout>
@@ -292,6 +324,7 @@ export default function AssetsPage() {
                         <TableHead>Name</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Sub-category</TableHead>
+                        <TableHead>Condition</TableHead>
                         <TableHead>Purchase Date</TableHead>
                         <TableHead>Value</TableHead>
                         <TableHead>Notes</TableHead>
@@ -311,6 +344,7 @@ export default function AssetsPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>{asset.subCategory || '-'}</TableCell>
+                          <TableCell>{getConditionBadge(asset.condition)}</TableCell>
                           <TableCell>{asset.purchaseDate}</TableCell>
                           <TableCell className="font-mono">
                             ${asset.purchasePrice.toLocaleString()}
