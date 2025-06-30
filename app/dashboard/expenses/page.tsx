@@ -34,6 +34,8 @@ export default function ExpensesPage() {
   const [editingExpense, setEditingExpense] = useState<ExpenseTransaction | null>(null);
   const [newCategory, setNewCategory] = useState('');
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const searchParams = useSearchParams();
 
@@ -81,17 +83,30 @@ export default function ExpensesPage() {
     employees.find(e => e.id === expense.employeeId)?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const resetForm = () => {
+    setNewCategory('');
+    setShowNewCategoryInput(false);
+    setSelectedCategory('');
+    setEditingExpense(null);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    setShowNewCategoryInput(value === 'new');
+    if (value !== 'new') {
+      setNewCategory('');
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
-    let categoryName = formData.get('category') as string;
-    if (categoryName === 'new' && newCategory.trim()) {
+    let categoryName = selectedCategory;
+    if (selectedCategory === 'new' && newCategory.trim()) {
       const newCat = dataStore.addCategory({ name: newCategory.trim(), type: 'expense' });
       categoryName = newCat.name;
       setCategories(dataStore.getCategories('expense'));
-      setNewCategory('');
-      setShowNewCategoryInput(false);
     }
 
     const expenseData = {
@@ -107,7 +122,7 @@ export default function ExpensesPage() {
     if (editingExpense) {
       dataStore.updateExpenseTransaction(editingExpense.id, expenseData);
       toast.success('Expense updated successfully');
-      setEditingExpense(null);
+      setIsEditDialogOpen(false);
     } else {
       dataStore.addExpenseTransaction(expenseData);
       toast.success('Expense added successfully');
@@ -115,7 +130,7 @@ export default function ExpensesPage() {
     }
 
     setExpenses(dataStore.getExpenseTransactions());
-    (e.target as HTMLFormElement).reset();
+    resetForm();
   };
 
   const handleDelete = (id: string) => {
@@ -124,6 +139,21 @@ export default function ExpensesPage() {
       setExpenses(dataStore.getExpenseTransactions());
       toast.success('Expense deleted successfully');
     }
+  };
+
+  const handleEditClick = (expense: ExpenseTransaction) => {
+    setEditingExpense(expense);
+    setSelectedCategory(expense.category);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDialogClose = (isAdd: boolean) => {
+    if (isAdd) {
+      setIsAddDialogOpen(false);
+    } else {
+      setIsEditDialogOpen(false);
+    }
+    resetForm();
   };
 
   const ExpenseForm = ({ expense }: { expense?: ExpenseTransaction }) => (
@@ -156,9 +186,7 @@ export default function ExpensesPage() {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
-          <Select name="category" defaultValue={expense?.category} onValueChange={(value) => {
-            setShowNewCategoryInput(value === 'new');
-          }}>
+          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -176,6 +204,11 @@ export default function ExpensesPage() {
               placeholder="Enter new category name"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                }
+              }}
             />
           )}
         </div>
@@ -253,7 +286,10 @@ export default function ExpensesPage() {
               Track and manage all your business expenses and spending.
             </p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+            if (!open) handleDialogClose(true);
+            else setIsAddDialogOpen(true);
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -385,26 +421,13 @@ export default function ExpensesPage() {
                         <TableCell>{employee?.name || 'Unknown'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditingExpense(expense)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[600px]">
-                                <DialogHeader>
-                                  <DialogTitle>Edit Expense</DialogTitle>
-                                  <DialogDescription>
-                                    Update the expense transaction details.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <ExpenseForm expense={editingExpense || undefined} />
-                              </DialogContent>
-                            </Dialog>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditClick(expense)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -422,6 +445,22 @@ export default function ExpensesPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          if (!open) handleDialogClose(false);
+          else setIsEditDialogOpen(true);
+        }}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Expense</DialogTitle>
+              <DialogDescription>
+                Update the expense transaction details.
+              </DialogDescription>
+            </DialogHeader>
+            <ExpenseForm expense={editingExpense || undefined} />
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
