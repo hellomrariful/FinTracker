@@ -38,7 +38,7 @@ const lastMonthIncome = dataStore.getTotalIncome(startOfLastMonth, endOfLastMont
 const lastMonthExpenses = dataStore.getTotalExpenses(startOfLastMonth, endOfLastMonth);
 
 const netProfit = currentMonthIncome - currentMonthExpenses;
-const profitMargin = currentMonthIncome > 0 ? (netProfit / currentMonthIncome) * 100 : 0;
+const roi = currentMonthExpenses > 0 ? (netProfit / currentMonthExpenses) * 100 : 0;
 
 // Calculate growth percentages
 const incomeGrowth = lastMonthIncome > 0 ? ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0;
@@ -158,14 +158,14 @@ export function DashboardOverview() {
 
         <Card className="bg-gradient-to-br from-chart-4/10 to-chart-4/5 border-chart-4/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profit Margin</CardTitle>
+            <CardTitle className="text-sm font-medium">ROI</CardTitle>
             <Target className="h-4 w-4 text-chart-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-chart-4">{profitMargin.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-chart-4">{roi.toFixed(1)}%</div>
             <div className="flex items-center text-xs text-accent mt-1">
               <ArrowUpRight className="mr-1 h-3 w-3" />
-              Healthy margin
+              Return on investment
             </div>
           </CardContent>
         </Card>
