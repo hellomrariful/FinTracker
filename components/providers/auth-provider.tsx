@@ -3,9 +3,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { MockUser } from '@/lib/auth/mock-auth';
 
 interface AuthContextType {
-  user: User | null;
+  user: User | MockUser | null;
   profile: any;
   loading: boolean;
   error: string | null;
