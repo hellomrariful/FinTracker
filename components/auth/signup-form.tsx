@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,22 +9,47 @@ import { Separator } from '@/components/ui/separator';
 import { BarChart3, Eye, EyeOff, Info } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { signUp } from '@/lib/supabase/auth';
 
 export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate account creation
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success('Account created successfully! Welcome to Fintracker.');
-    // Redirect to dashboard in a real app
-    window.location.href = '/dashboard';
-    setIsLoading(false);
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+    const company = formData.get('company') as string;
+
+    try {
+      const { user, error } = await signUp({
+        email,
+        password,
+        firstName,
+        lastName,
+        company
+      });
+      
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      if (user) {
+        toast.success('Account created successfully! Please check your email to verify your account.');
+        router.push('/auth/signin');
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

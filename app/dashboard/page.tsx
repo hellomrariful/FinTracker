@@ -1,3 +1,4 @@
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { DashboardOverview } from '@/components/dashboard/dashboard-overview';
 
@@ -8,8 +9,10 @@ export const metadata = {
 
 export default function DashboardPage() {
   return (
-    <DashboardLayout>
-      <DashboardOverview />
-    </DashboardLayout>
+    <ProtectedRoute>
+      <DashboardLayout>
+        <DashboardOverview />
+      </DashboardLayout>
+    </ProtectedRoute>
   );
 }
