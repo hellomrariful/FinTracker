@@ -170,14 +170,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face" alt="Profile" />
-                      <AvatarFallback>DU</AvatarFallback>
+                      <AvatarFallback>JD</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">Demo User</p>
+                      <p className="text-sm font-medium leading-none">John Doe</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         demo@fintracker.com
                       </p>
