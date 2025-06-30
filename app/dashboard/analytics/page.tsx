@@ -18,7 +18,7 @@ import {
   ArrowDownRight,
   User
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Cell } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { dataStore } from '@/lib/data-store';
 
 export default function AnalyticsPage() {
@@ -355,18 +355,19 @@ export default function AnalyticsPage() {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <PieChart 
+                    <Pie 
                       data={expenseCategoryData}
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
                       outerRadius={120}
                       paddingAngle={2}
+                      dataKey="value"
                     >
                       {expenseCategoryData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
-                    </PieChart>
+                    </Pie>
                     <Tooltip 
                       formatter={(value: number) => [`$${value.toLocaleString()}`, 'Amount']}
                       contentStyle={{ 
