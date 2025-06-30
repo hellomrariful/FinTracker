@@ -84,12 +84,12 @@ export interface Goal {
   priority: 'low' | 'medium' | 'high';
 }
 
-// Enhanced initial data
+// Enhanced initial data with demo user context
 const employees: Employee[] = [
   { 
     id: '1', 
-    name: 'John Doe', 
-    role: 'CEO', 
+    name: 'Demo User', 
+    role: 'CEO & Founder', 
     avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face',
     department: 'Executive',
     hireDate: '2020-01-15',
@@ -214,7 +214,7 @@ const categories: Category[] = [
 ];
 
 const incomeTransactions: IncomeTransaction[] = [
-  // Recent transactions (2024)
+  // Recent transactions (2024) - mostly attributed to Demo User as CEO
   { id: '1', name: 'E-commerce Platform Development', source: 'TechCorp Inc', category: 'Client Projects', platform: 'Direct', amount: 45000, date: '2024-01-15', paymentMethod: 'Bank Transfer', employeeId: '1', status: 'completed', recurring: false },
   { id: '2', name: 'Mobile App Consulting', source: 'StartupXYZ', category: 'Consulting', platform: 'Upwork', amount: 12500, date: '2024-01-12', paymentMethod: 'PayPal', employeeId: '2', status: 'completed', recurring: false },
   { id: '3', name: 'SaaS Monthly Subscription', source: 'Enterprise Client A', category: 'Subscriptions', platform: 'Stripe', amount: 8500, date: '2024-01-10', paymentMethod: 'Credit Card', employeeId: '3', status: 'completed', recurring: true },
@@ -224,7 +224,7 @@ const incomeTransactions: IncomeTransaction[] = [
   { id: '7', name: 'Training Workshop', source: 'Corporate Training Co', category: 'Training', platform: 'Direct', amount: 9500, date: '2024-01-02', paymentMethod: 'Check', employeeId: '4', status: 'completed', recurring: false },
   
   // December 2023
-  { id: '8', name: 'Year-end Consulting Bonus', source: 'MegaCorp', category: 'Consulting', platform: 'Direct', amount: 22000, date: '2023-12-28', paymentMethod: 'Bank Transfer', employeeId: '2', status: 'completed', recurring: false },
+  { id: '8', name: 'Year-end Consulting Bonus', source: 'MegaCorp', category: 'Consulting', platform: 'Direct', amount: 22000, date: '2023-12-28', paymentMethod: 'Bank Transfer', employeeId: '1', status: 'completed', recurring: false },
   { id: '9', name: 'Partnership Revenue Share', source: 'Strategic Partner', category: 'Partnerships', platform: 'Direct', amount: 18500, date: '2023-12-25', paymentMethod: 'Bank Transfer', employeeId: '3', status: 'completed', recurring: true },
   { id: '10', name: 'Custom Dashboard Development', source: 'Analytics Corp', category: 'Client Projects', platform: 'Direct', amount: 35000, date: '2023-12-20', paymentMethod: 'Bank Transfer', employeeId: '5', status: 'completed', recurring: false },
   
@@ -239,12 +239,12 @@ const incomeTransactions: IncomeTransaction[] = [
 ];
 
 const expenseTransactions: ExpenseTransaction[] = [
-  // January 2024
+  // January 2024 - Demo User as CEO handling major expenses
   { id: '1', name: 'AWS Cloud Services', category: 'Software', platform: 'Amazon Web Services', amount: 2450, date: '2024-01-14', paymentMethod: 'Credit Card', employeeId: '2', status: 'completed', businessPurpose: 'Infrastructure hosting' },
   { id: '2', name: 'Google Ads Campaign Q1', category: 'Marketing', platform: 'Google Ads', amount: 6200, date: '2024-01-13', paymentMethod: 'Credit Card', employeeId: '4', status: 'completed', businessPurpose: 'Lead generation campaign' },
   { id: '3', name: 'Office Supplies & Equipment', category: 'Operations', platform: 'Amazon Business', amount: 850, date: '2024-01-12', paymentMethod: 'Credit Card', employeeId: '1', status: 'completed', businessPurpose: 'General office supplies' },
   { id: '4', name: 'Adobe Creative Suite Licenses', category: 'Software', platform: 'Adobe', amount: 1200, date: '2024-01-11', paymentMethod: 'Credit Card', employeeId: '8', status: 'completed', businessPurpose: 'Design software licenses' },
-  { id: '5', name: 'Team Building Lunch', category: 'Entertainment', platform: 'Local Restaurant', amount: 320, date: '2024-01-10', paymentMethod: 'Cash', employeeId: '3', status: 'completed', businessPurpose: 'Team morale event' },
+  { id: '5', name: 'Team Building Lunch', category: 'Entertainment', platform: 'Local Restaurant', amount: 320, date: '2024-01-10', paymentMethod: 'Cash', employeeId: '1', status: 'completed', businessPurpose: 'Team morale event' },
   { id: '6', name: 'Office Rent January', category: 'Office Rent', platform: 'Property Management', amount: 8500, date: '2024-01-01', paymentMethod: 'Bank Transfer', employeeId: '1', status: 'completed', businessPurpose: 'Monthly office rent' },
   { id: '7', name: 'Internet & Phone Services', category: 'Utilities', platform: 'Telecom Provider', amount: 450, date: '2024-01-05', paymentMethod: 'Auto Pay', employeeId: '1', status: 'completed', businessPurpose: 'Monthly utilities' },
   { id: '8', name: 'Business Insurance Premium', category: 'Insurance', platform: 'Insurance Co', amount: 1800, date: '2024-01-03', paymentMethod: 'Bank Transfer', employeeId: '1', status: 'completed', businessPurpose: 'Quarterly insurance premium' },
@@ -304,7 +304,7 @@ const assets: Asset[] = [
     condition: 'excellent',
     warranty: '2035-10-20',
     notes: 'Ergonomic office chair for executive team',
-    assignedTo: 'John Doe'
+    assignedTo: 'Demo User'
   },
   { 
     id: '4', 
