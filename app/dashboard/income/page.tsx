@@ -5,9 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,6 +22,7 @@ import {
   Building
 } from 'lucide-react';
 import { dataStore, type IncomeTransaction } from '@/lib/data-store';
+import { IncomeForm } from '@/components/dashboard/income-form';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 
@@ -34,12 +33,7 @@ export default function IncomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<IncomeTransaction | null>(null);
-  const [newCategory, setNewCategory] = useState('');
-  const [newSource, setNewSource] = useState('');
-  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
-  const [showNewSourceInput, setShowNewSourceInput] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedSource, setSelectedSource] = useState('');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const searchParams = useSearchParams();
 
@@ -91,62 +85,9 @@ export default function IncomePage() {
     employees.find(e => e.id === income.employeeId)?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const resetForm = () => {
-    setNewCategory('');
-    setNewSource('');
-    setShowNewCategoryInput(false);
-    setShowNewSourceInput(false);
-    setSelectedCategory('');
-    setSelectedSource('');
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    setIsAddDialogOpen(open);
-    if (!open) {
-      resetForm();
-      setEditingIncome(null);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    let categoryName = selectedCategory;
-    if (selectedCategory === 'new' && newCategory.trim()) {
-      const newCat = dataStore.addCategory({ name: newCategory.trim(), type: 'income' });
-      categoryName = newCat.name;
-      setCategories(dataStore.getCategories('income'));
-    }
-
-    let sourceName = selectedSource;
-    if (selectedSource === 'new' && newSource.trim()) {
-      sourceName = newSource.trim();
-    }
-
-    const incomeData = {
-      name: formData.get('name') as string,
-      source: sourceName,
-      category: categoryName,
-      platform: formData.get('platform') as string || undefined,
-      amount: parseFloat(formData.get('amount') as string),
-      date: formData.get('date') as string,
-      paymentMethod: formData.get('paymentMethod') as string,
-      employeeId: formData.get('employeeId') as string,
-    };
-
-    if (editingIncome) {
-      dataStore.updateIncomeTransaction(editingIncome.id, incomeData);
-      toast.success('Income updated successfully');
-      setEditingIncome(null);
-    } else {
-      dataStore.addIncomeTransaction(incomeData);
-      toast.success('Income added successfully');
-    }
-
+  const handleSuccess = () => {
     setIncomeTransactions(dataStore.getIncomeTransactions());
-    setIsAddDialogOpen(false);
-    resetForm();
+    setCategories(dataStore.getCategories('income'));
   };
 
   const handleDelete = (id: string) => {
@@ -157,169 +98,9 @@ export default function IncomePage() {
     }
   };
 
-  const handleCategoryChange = (value: string) => {
-    setSelectedCategory(value);
-    setShowNewCategoryInput(value === 'new');
-    if (value !== 'new') {
-      setNewCategory('');
-    }
-  };
-
-  const handleSourceChange = (value: string) => {
-    setSelectedSource(value);
-    setShowNewSourceInput(value === 'new');
-    if (value !== 'new') {
-      setNewSource('');
-    }
-  };
-
-  const IncomeForm = ({ income }: { income?: IncomeTransaction }) => {
-    useEffect(() => {
-      if (income) {
-        setSelectedCategory(income.category);
-        setSelectedSource(income.source);
-      }
-    }, [income]);
-
-    return (
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name/Description</Label>
-            <Input
-              id="name"
-              name="name"
-              defaultValue={income?.name}
-              placeholder="Website Development"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              defaultValue={income?.amount}
-              placeholder="0.00"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="source">Source</Label>
-            <Select value={selectedSource} onValueChange={handleSourceChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select source" />
-              </SelectTrigger>
-              <SelectContent>
-                {existingSources.map((source) => (
-                  <SelectItem key={source} value={source}>
-                    {source}
-                  </SelectItem>
-                ))}
-                <SelectItem value="new">+ Add new source</SelectItem>
-              </SelectContent>
-            </Select>
-            {showNewSourceInput && (
-              <Input
-                placeholder="Enter new source name"
-                value={newSource}
-                onChange={(e) => setNewSource(e.target.value)}
-              />
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.filter(category => category.name && category.name.trim() !== '').map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value="new">+ Add new category</SelectItem>
-              </SelectContent>
-            </Select>
-            {showNewCategoryInput && (
-              <Input
-                placeholder="Enter new category name"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="platform">Platform</Label>
-            <Input
-              id="platform"
-              name="platform"
-              defaultValue={income?.platform}
-              placeholder="Direct, Upwork, etc."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              name="date"
-              type="date"
-              defaultValue={income?.date}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="paymentMethod">Payment Method</Label>
-            <Select name="paymentMethod" defaultValue={income?.paymentMethod}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                <SelectItem value="Credit Card">Credit Card</SelectItem>
-                <SelectItem value="PayPal">PayPal</SelectItem>
-                <SelectItem value="Stripe">Stripe</SelectItem>
-                <SelectItem value="Cash">Cash</SelectItem>
-                <SelectItem value="Check">Check</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="employeeId">Employee</Label>
-            <Select name="employeeId" defaultValue={income?.employeeId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select employee" />
-              </SelectTrigger>
-              <SelectContent>
-                {employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name} - {employee.role}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button type="submit">
-            {income ? 'Update Income' : 'Add Income'}
-          </Button>
-        </DialogFooter>
-      </form>
-    );
+  const handleEditClick = (income: IncomeTransaction) => {
+    setEditingIncome(income);
+    setIsEditDialogOpen(true);
   };
 
   return (
@@ -333,7 +114,7 @@ export default function IncomePage() {
               Track and manage all your income sources and revenue streams.
             </p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -347,7 +128,13 @@ export default function IncomePage() {
                   Enter the details of your new income transaction.
                 </DialogDescription>
               </DialogHeader>
-              <IncomeForm />
+              <IncomeForm
+                employees={employees}
+                categories={categories}
+                existingSources={existingSources}
+                onSuccess={handleSuccess}
+                onClose={() => setIsAddDialogOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -489,26 +276,13 @@ export default function IncomePage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditingIncome(income)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[600px]">
-                                <DialogHeader>
-                                  <DialogTitle>Edit Income</DialogTitle>
-                                  <DialogDescription>
-                                    Update the income transaction details.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <IncomeForm income={editingIncome || undefined} />
-                              </DialogContent>
-                            </Dialog>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditClick(income)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -526,6 +300,29 @@ export default function IncomePage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Income</DialogTitle>
+              <DialogDescription>
+                Update the income transaction details.
+              </DialogDescription>
+            </DialogHeader>
+            <IncomeForm
+              income={editingIncome || undefined}
+              employees={employees}
+              categories={categories}
+              existingSources={existingSources}
+              onSuccess={handleSuccess}
+              onClose={() => {
+                setIsEditDialogOpen(false);
+                setEditingIncome(null);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
