@@ -98,28 +98,12 @@ export function HeroSection() {
                   </div>
                 </div>
               </div>
-              <div className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Stats Cards */}
-                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-6 border border-primary/20">
-                    <div className="text-2xl font-bold text-primary">$124,500</div>
-                    <div className="text-sm text-muted-foreground">Total Revenue</div>
-                    <div className="text-xs text-accent mt-1">↑ 12.5% from last month</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-accent/10 to-accent/5 rounded-xl p-6 border border-accent/20">
-                    <div className="text-2xl font-bold text-accent">45</div>
-                    <div className="text-sm text-muted-foreground">Active Projects</div>
-                    <div className="text-xs text-primary mt-1">↑ 8.3% from last month</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-chart-3/10 to-chart-3/5 rounded-xl p-6 border border-chart-3/20">
-                    <div className="text-2xl font-bold text-chart-3">23.4%</div>
-                    <div className="text-sm text-muted-foreground">Profit Margin</div>
-                    <div className="text-xs text-accent mt-1">↑ 2.1% from last month</div>
-                  </div>
-                </div>
-                <div className="mt-6 h-32 bg-gradient-to-r from-primary/5 via-accent/5 to-chart-3/5 rounded-xl border border-border flex items-center justify-center">
-                  <div className="text-muted-foreground text-sm">Interactive Chart Preview</div>
-                </div>
+              <div className="p-0">
+                <img 
+                  src="/Screenshot.png" 
+                  alt="Fintracker Dashboard Preview" 
+                  className="w-full h-auto object-cover"
+                />
               </div>
             </div>
           </div>
