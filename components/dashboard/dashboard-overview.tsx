@@ -3,6 +3,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -12,7 +14,12 @@ import {
   Plus,
   ArrowUpRight,
   ArrowDownRight,
-  Target
+  Target,
+  Trophy,
+  Medal,
+  Award,
+  Star,
+  Crown
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsePieChart, Cell } from 'recharts';
 import { dataStore } from '@/lib/data-store';
@@ -54,6 +61,15 @@ const revenueData = [
   { month: 'Jun', revenue: currentMonthIncome, expenses: currentMonthExpenses },
 ];
 
+// Enhanced expense categories with icons and analytics
+const expenseCategories = [
+  { name: 'Software', icon: '💻', color: 'hsl(var(--chart-1))', budget: 5000, spent: 2450 },
+  { name: 'Marketing', icon: '📢', color: 'hsl(var(--chart-2))', budget: 8000, spent: 6200 },
+  { name: 'Operations', icon: '⚙️', color: 'hsl(var(--chart-3))', budget: 3000, spent: 1850 },
+  { name: 'Equipment', icon: '🖥️', color: 'hsl(var(--chart-4))', budget: 4000, spent: 3200 },
+  { name: 'Travel', icon: '✈️', color: 'hsl(var(--chart-5))', budget: 2000, spent: 850 },
+];
+
 // Get expense breakdown by category
 const expenseTransactions = dataStore.getExpenseTransactions();
 const expenseByCategory = expenseTransactions.reduce((acc, transaction) => {
@@ -74,6 +90,46 @@ const allTransactions = [
   ...dataStore.getExpenseTransactions().map(t => ({ ...t, type: 'expense' as const, amount: -t.amount }))
 ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
+// Top performing employees data
+const employees = dataStore.getEmployees();
+const incomeTransactions = dataStore.getIncomeTransactions();
+
+const employeePerformance = employees.map(employee => {
+  const employeeIncome = incomeTransactions
+    .filter(t => t.employeeId === employee.id)
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const employeeTransactions = incomeTransactions.filter(t => t.employeeId === employee.id).length;
+  
+  const lastMonthIncome = incomeTransactions
+    .filter(t => t.employeeId === employee.id && t.date >= startOfLastMonth && t.date <= endOfLastMonth)
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const currentMonthIncome = incomeTransactions
+    .filter(t => t.employeeId === employee.id && t.date >= startOfMonth && t.date <= endOfMonth)
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const growth = lastMonthIncome > 0 ? ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0;
+  
+  return {
+    ...employee,
+    totalIncome: employeeIncome,
+    transactions: employeeTransactions,
+    currentMonthIncome,
+    growth,
+    avgPerTransaction: employeeTransactions > 0 ? employeeIncome / employeeTransactions : 0
+  };
+}).sort((a, b) => b.totalIncome - a.totalIncome).slice(0, 5);
+
+const getRankIcon = (rank: number) => {
+  switch (rank) {
+    case 1: return <Crown className="h-4 w-4 text-yellow-500" />;
+    case 2: return <Medal className="h-4 w-4 text-gray-400" />;
+    case 3: return <Award className="h-4 w-4 text-amber-600" />;
+    default: return <Star className="h-4 w-4 text-muted-foreground" />;
+  }
+};
+
 export function DashboardOverview() {
   return (
     <div className="space-y-8">
@@ -87,9 +143,12 @@ export function DashboardOverview() {
         </div>
         <div className="mt-4 sm:mt-0">
           <Link href="/dashboard/income?add=true">
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Transaction
+            <Button size="sm" className="group relative overflow-hidden transition-all duration-200 hover:scale-105 active:scale-95">
+              <span className="relative z-10 flex items-center">
+                <Plus className="mr-2 h-4 w-4 transition-transform group-hover:rotate-90" />
+                Add
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 transition-opacity group-hover:opacity-20" />
             </Button>
           </Link>
         </div>
@@ -166,6 +225,49 @@ export function DashboardOverview() {
         </Card>
       </div>
 
+      {/* Enhanced Expense Categories */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Expense Categories Performance</CardTitle>
+          <CardDescription>
+            Budget vs actual spending by category
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {expenseCategories.map((category, index) => {
+              const percentage = (category.spent / category.budget) * 100;
+              const isOverBudget = percentage > 100;
+              
+              return (
+                <div key={category.name} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">{category.icon}</div>
+                    <div>
+                      <p className="font-medium text-foreground">{category.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        ${category.spent.toLocaleString()} / ${category.budget.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-24">
+                      <Progress 
+                        value={Math.min(percentage, 100)} 
+                        className={`h-2 ${isOverBudget ? 'bg-destructive/20' : ''}`}
+                      />
+                    </div>
+                    <Badge variant={isOverBudget ? 'destructive' : percentage > 80 ? 'secondary' : 'default'}>
+                      {percentage.toFixed(0)}%
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Charts Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Revenue Chart */}
@@ -238,7 +340,6 @@ export function DashboardOverview() {
                     cy="50%"
                     innerRadius={60}
                     outerRadius={120}
-                    paddingAngle={2}
                   >
                     {categoryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -322,47 +423,69 @@ export function DashboardOverview() {
           </CardContent>
         </Card>
 
-        {/* Quick Stats */}
+        {/* Top Performing Employees */}
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Goals</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              Top Performing Employees
+            </CardTitle>
             <CardDescription>
-              Track your financial targets
+              Ranked by total income generated
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Revenue Goal</span>
-                <span className="font-medium">${currentMonthIncome.toLocaleString()} / $80k</span>
+          <CardContent className="space-y-4">
+            {employeePerformance.map((employee, index) => (
+              <div 
+                key={employee.id} 
+                className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                    <span className="text-sm font-bold text-primary">{index + 1}</span>
+                  </div>
+                  
+                  <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+                    <AvatarImage src={employee.avatar} />
+                    <AvatarFallback className="text-xs font-medium">
+                      {employee.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {getRankIcon(index + 1)}
+                      <p className="font-medium text-sm truncate">{employee.name}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{employee.role}</p>
+                  </div>
+                </div>
+                
+                <div className="text-right">
+                  <p className="text-sm font-bold text-primary">
+                    ${employee.totalIncome.toLocaleString()}
+                  </p>
+                  <div className={`flex items-center text-xs ${
+                    employee.growth >= 0 ? 'text-accent' : 'text-destructive'
+                  }`}>
+                    {employee.growth >= 0 ? (
+                      <ArrowUpRight className="mr-1 h-3 w-3" />
+                    ) : (
+                      <ArrowDownRight className="mr-1 h-3 w-3" />
+                    )}
+                    {Math.abs(employee.growth).toFixed(1)}%
+                  </div>
+                </div>
               </div>
-              <Progress value={(currentMonthIncome / 80000) * 100} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">{Math.round((currentMonthIncome / 80000) * 100)}% complete</p>
-            </div>
+            ))}
             
-            <div>
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Expense Budget</span>
-                <span className="font-medium">${currentMonthExpenses.toLocaleString()} / $50k</span>
-              </div>
-              <Progress value={(currentMonthExpenses / 50000) * 100} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">{Math.round((currentMonthExpenses / 50000) * 100)}% used</p>
-            </div>
-            
-            <div>
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Profit Target</span>
-                <span className="font-medium">${netProfit.toLocaleString()} / $30k</span>
-              </div>
-              <Progress value={(netProfit / 30000) * 100} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">{Math.round((netProfit / 30000) * 100)}% achieved</p>
-            </div>
-
             <div className="pt-4 border-t border-border">
-              <Button className="w-full" size="sm">
-                <Target className="mr-2 h-4 w-4" />
-                Update Goals
-              </Button>
+              <Link href="/dashboard/settings">
+                <Button variant="outline" className="w-full" size="sm">
+                  <Users className="mr-2 h-4 w-4" />
+                  View All Employees
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
