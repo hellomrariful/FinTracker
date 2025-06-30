@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
   // Get top employee for selected period
   const topEmployee = dataStore.getTopEmployee(startDate, endDate);
 
-  // Generate revenue vs expenses data for the last 6 months
+  // Generate revenue vs expenses data for the last 6 months using actual data
   const generateRevenueVsExpensesData = () => {
     const data = [];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
