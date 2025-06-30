@@ -39,7 +39,7 @@ const team = [
   {
     name: 'Marcus Rodriguez',
     role: 'Head of Product',
-    imageUrl: 'https://www.facebook.com/photo.php?fbid=615237344253614&set=pb.100073020623273.-2207520000&type=3',
+    imageUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlciUyMHByb2ZpbGV8ZW58MHx8MHx8fDA%3D',
     bio: 'Product strategist with experience at Stripe and Square. Focused on building intuitive financial experiences.',
   },
   {
