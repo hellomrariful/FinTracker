@@ -73,18 +73,13 @@ export function AboutSection() {
             </h2>
             <div className="prose prose-lg max-w-none">
               <p className="text-muted-foreground leading-8">
-                Fintracker was born from frustration. As entrepreneurs ourselves, we struggled with 
-                existing financial tools that were either too basic for growing businesses or too 
-                complex and expensive for small teams.
+              Fintracker was born out of real frustration from running a performance marketing company where managing finances across ad platforms, clients, teams, and tools became increasingly chaotic.
               </p>
               <p className="text-muted-foreground leading-8 mt-4">
-                We believed there had to be a better way. In 2022, we set out to build the financial 
-                management platform we wished existed - one that could grow with your business, provide 
-                meaningful insights, and actually be enjoyable to use.
+                Existing solutions were either too limited or too complex for our needs. So we built the tool we wished we had — a clean, all-in-one dashboard that helps digital businesses easily track income, expenses, ROI, top-performing employees, and more.
               </p>
               <p className="text-muted-foreground leading-8 mt-4">
-                Today, Fintracker serves over 50,000 businesses worldwide, from solo entrepreneurs to 
-                fast-growing startups. We're proud to be part of their journey toward better financial health.
+              Fintracker is designed to grow with your business, cut through the noise, and give you the financial clarity every digital team deserves.
               </p>
             </div>
           </div>
