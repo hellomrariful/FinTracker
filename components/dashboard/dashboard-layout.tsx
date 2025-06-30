@@ -147,6 +147,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Separator */}
           <div className="h-6 w-px bg-border lg:hidden" aria-hidden="true" />
 
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+
             {/* Right side items */}
             <div className="flex flex-1 items-center justify-end gap-x-4 lg:gap-x-6">
               <ThemeToggle />
