@@ -31,7 +31,7 @@ const navigation = {
 const social = [
   {
     name: 'Twitter',
-    href: '#',
+    href: 'https://x.com/hellomrariful',
     icon: Twitter,
   },
   {
