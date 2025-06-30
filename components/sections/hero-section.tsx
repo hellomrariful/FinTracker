@@ -114,7 +114,7 @@ export function HeroSection() {
       <VideoModal
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
-        videoUrl="https://www.youtube.com/watch?v=ZK-rNEhJIDs&ab_channel=WhataStory%7CSaaS%26TechProductVideoExperts"
+        videoUrl="https://www.youtube.com/watch?v=7Dmozfs0Q44&ab_channel=ArifulIslam"
         title="Fintracker Demo Video"
       />
     </div>
