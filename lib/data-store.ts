@@ -84,7 +84,7 @@ export interface Goal {
   priority: 'low' | 'medium' | 'high';
 }
 
-// Enhanced initial data
+// Enhanced initial data with comprehensive historical data
 const employees: Employee[] = [
   { 
     id: '1', 
@@ -213,51 +213,132 @@ const categories: Category[] = [
   { id: '19', name: 'Entertainment', type: 'expense', description: 'Client entertainment', icon: '🍽️' }
 ];
 
-const incomeTransactions: IncomeTransaction[] = [
-  // Recent transactions (2024)
-  { id: '1', name: 'E-commerce Platform Development', source: 'TechCorp Inc', category: 'Client Projects', platform: 'Direct', amount: 45000, date: '2024-01-15', paymentMethod: 'Bank Transfer', employeeId: '1', status: 'completed', recurring: false },
-  { id: '2', name: 'Mobile App Consulting', source: 'StartupXYZ', category: 'Consulting', platform: 'Upwork', amount: 12500, date: '2024-01-12', paymentMethod: 'PayPal', employeeId: '2', status: 'completed', recurring: false },
-  { id: '3', name: 'SaaS Monthly Subscription', source: 'Enterprise Client A', category: 'Subscriptions', platform: 'Stripe', amount: 8500, date: '2024-01-10', paymentMethod: 'Credit Card', employeeId: '3', status: 'completed', recurring: true },
-  { id: '4', name: 'Digital Product Sales', source: 'Online Store', category: 'Product Sales', platform: 'Shopify', amount: 6200, date: '2024-01-08', paymentMethod: 'Stripe', employeeId: '4', status: 'completed', recurring: false },
-  { id: '5', name: 'API Integration Project', source: 'FinTech Co', category: 'Client Projects', platform: 'Direct', amount: 28000, date: '2024-01-05', paymentMethod: 'Bank Transfer', employeeId: '1', status: 'completed', recurring: false },
-  { id: '6', name: 'Software License Revenue', source: 'Tech Solutions Ltd', category: 'Licensing', platform: 'Direct', amount: 15000, date: '2024-01-03', paymentMethod: 'Bank Transfer', employeeId: '6', status: 'completed', recurring: false },
-  { id: '7', name: 'Training Workshop', source: 'Corporate Training Co', category: 'Training', platform: 'Direct', amount: 9500, date: '2024-01-02', paymentMethod: 'Check', employeeId: '4', status: 'completed', recurring: false },
+// Generate comprehensive historical data for the last 12 months
+const generateHistoricalData = () => {
+  const incomeTransactions: IncomeTransaction[] = [];
+  const expenseTransactions: ExpenseTransaction[] = [];
   
-  // December 2023
-  { id: '8', name: 'Year-end Consulting Bonus', source: 'MegaCorp', category: 'Consulting', platform: 'Direct', amount: 22000, date: '2023-12-28', paymentMethod: 'Bank Transfer', employeeId: '2', status: 'completed', recurring: false },
-  { id: '9', name: 'Partnership Revenue Share', source: 'Strategic Partner', category: 'Partnerships', platform: 'Direct', amount: 18500, date: '2023-12-25', paymentMethod: 'Bank Transfer', employeeId: '3', status: 'completed', recurring: true },
-  { id: '10', name: 'Custom Dashboard Development', source: 'Analytics Corp', category: 'Client Projects', platform: 'Direct', amount: 35000, date: '2023-12-20', paymentMethod: 'Bank Transfer', employeeId: '5', status: 'completed', recurring: false },
+  const now = new Date();
   
-  // November 2023
-  { id: '11', name: 'Monthly SaaS Revenue', source: 'Enterprise Client B', category: 'Subscriptions', platform: 'Stripe', amount: 12000, date: '2023-11-30', paymentMethod: 'Credit Card', employeeId: '3', status: 'completed', recurring: true },
-  { id: '12', name: 'UI/UX Design Project', source: 'Design Agency', category: 'Client Projects', platform: 'Direct', amount: 16500, date: '2023-11-25', paymentMethod: 'PayPal', employeeId: '8', status: 'completed', recurring: false },
-  { id: '13', name: 'Technical Training Series', source: 'Education Platform', category: 'Training', platform: 'Direct', amount: 8000, date: '2023-11-20', paymentMethod: 'Bank Transfer', employeeId: '2', status: 'completed', recurring: false },
+  // Generate data for each of the last 12 months
+  for (let monthOffset = 11; monthOffset >= 0; monthOffset--) {
+    const targetDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1);
+    const year = targetDate.getFullYear();
+    const month = targetDate.getMonth();
+    
+    // Generate 8-15 income transactions per month
+    const incomeCount = 8 + Math.floor(Math.random() * 8);
+    for (let i = 0; i < incomeCount; i++) {
+      const day = Math.floor(Math.random() * 28) + 1;
+      const date = new Date(year, month, day);
+      
+      const incomeCategories = ['Client Projects', 'Consulting', 'Product Sales', 'Subscriptions', 'Licensing', 'Training', 'Partnerships'];
+      const sources = ['TechCorp Inc', 'StartupXYZ', 'Enterprise Client A', 'Online Store', 'FinTech Co', 'Tech Solutions Ltd', 'Corporate Training Co', 'MegaCorp', 'Strategic Partner', 'Analytics Corp', 'Design Agency', 'Education Platform', 'Legacy Systems Inc', 'Marketplace'];
+      const platforms = ['Direct', 'Upwork', 'Stripe', 'Shopify', 'PayPal', 'Amazon', 'Freelancer'];
+      const paymentMethods = ['Bank Transfer', 'PayPal', 'Credit Card', 'Stripe', 'Check', 'Amazon Pay'];
+      
+      const category = incomeCategories[Math.floor(Math.random() * incomeCategories.length)];
+      const source = sources[Math.floor(Math.random() * sources.length)];
+      const platform = platforms[Math.floor(Math.random() * platforms.length)];
+      const paymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+      const employeeId = employees[Math.floor(Math.random() * employees.length)].id;
+      
+      // Vary amounts based on category
+      let baseAmount = 5000;
+      if (category === 'Client Projects') baseAmount = 25000;
+      else if (category === 'Consulting') baseAmount = 15000;
+      else if (category === 'Subscriptions') baseAmount = 8000;
+      else if (category === 'Product Sales') baseAmount = 6000;
+      else if (category === 'Licensing') baseAmount = 12000;
+      else if (category === 'Training') baseAmount = 7000;
+      else if (category === 'Partnerships') baseAmount = 18000;
+      
+      const amount = baseAmount + (Math.random() * baseAmount * 0.5);
+      
+      const projectNames = [
+        'E-commerce Platform Development', 'Mobile App Consulting', 'SaaS Monthly Subscription',
+        'Digital Product Sales', 'API Integration Project', 'Software License Revenue',
+        'Training Workshop', 'Year-end Consulting Bonus', 'Partnership Revenue Share',
+        'Custom Dashboard Development', 'UI/UX Design Project', 'Technical Training Series',
+        'Cloud Migration Consulting', 'Product Sales Q4', 'Enterprise Integration',
+        'Marketing Automation Setup', 'Data Analytics Platform', 'Security Audit Services'
+      ];
+      
+      incomeTransactions.push({
+        id: `income-${year}-${month}-${i}`,
+        name: projectNames[Math.floor(Math.random() * projectNames.length)],
+        source,
+        category,
+        platform,
+        amount: Math.round(amount),
+        date: date.toISOString().split('T')[0],
+        paymentMethod,
+        employeeId,
+        status: 'completed',
+        recurring: category === 'Subscriptions' && Math.random() > 0.7
+      });
+    }
+    
+    // Generate 12-20 expense transactions per month
+    const expenseCount = 12 + Math.floor(Math.random() * 9);
+    for (let i = 0; i < expenseCount; i++) {
+      const day = Math.floor(Math.random() * 28) + 1;
+      const date = new Date(year, month, day);
+      
+      const expenseCategories = ['Software', 'Marketing', 'Operations', 'Salaries', 'Equipment', 'Travel', 'Office Rent', 'Utilities', 'Legal & Professional', 'Insurance', 'Training & Development', 'Entertainment'];
+      const platforms = ['Amazon Web Services', 'Google Ads', 'Amazon Business', 'Adobe', 'Local Restaurant', 'Property Management', 'Telecom Provider', 'Insurance Co', 'Online Learning', 'Law Firm', 'Travel Agency', 'Apple Store', 'Print Shop', 'JetBrains'];
+      const paymentMethods = ['Credit Card', 'Bank Transfer', 'Auto Pay', 'Check', 'Cash', 'PayPal'];
+      
+      const category = expenseCategories[Math.floor(Math.random() * expenseCategories.length)];
+      const platform = platforms[Math.floor(Math.random() * platforms.length)];
+      const paymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+      const employeeId = employees[Math.floor(Math.random() * employees.length)].id;
+      
+      // Vary amounts based on category
+      let baseAmount = 500;
+      if (category === 'Salaries') baseAmount = 15000;
+      else if (category === 'Office Rent') baseAmount = 8000;
+      else if (category === 'Marketing') baseAmount = 4000;
+      else if (category === 'Software') baseAmount = 2000;
+      else if (category === 'Equipment') baseAmount = 2500;
+      else if (category === 'Travel') baseAmount = 1500;
+      else if (category === 'Insurance') baseAmount = 1800;
+      else if (category === 'Legal & Professional') baseAmount = 2200;
+      else if (category === 'Training & Development') baseAmount = 950;
+      else if (category === 'Utilities') baseAmount = 450;
+      else if (category === 'Operations') baseAmount = 800;
+      else if (category === 'Entertainment') baseAmount = 300;
+      
+      const amount = baseAmount + (Math.random() * baseAmount * 0.3);
+      
+      const expenseNames = [
+        'AWS Cloud Services', 'Google Ads Campaign', 'Office Supplies & Equipment',
+        'Adobe Creative Suite Licenses', 'Team Building Lunch', 'Office Rent',
+        'Internet & Phone Services', 'Business Insurance Premium', 'Employee Training Course',
+        'Legal Consultation', 'Year-end Bonuses', 'Conference Travel Expenses',
+        'New Laptop Purchase', 'Marketing Materials', 'Software Development Tools',
+        'Client Dinner', 'Printer Maintenance', 'Security Software', 'Accounting Software'
+      ];
+      
+      expenseTransactions.push({
+        id: `expense-${year}-${month}-${i}`,
+        name: expenseNames[Math.floor(Math.random() * expenseNames.length)],
+        category,
+        platform,
+        amount: Math.round(amount),
+        date: date.toISOString().split('T')[0],
+        paymentMethod,
+        employeeId,
+        status: 'completed',
+        businessPurpose: `${category} related expense for business operations`
+      });
+    }
+  }
   
-  // October 2023
-  { id: '14', name: 'Cloud Migration Consulting', source: 'Legacy Systems Inc', category: 'Consulting', platform: 'Direct', amount: 42000, date: '2023-10-15', paymentMethod: 'Bank Transfer', employeeId: '9', status: 'completed', recurring: false },
-  { id: '15', name: 'Product Sales Q4', source: 'Marketplace', category: 'Product Sales', platform: 'Amazon', amount: 14200, date: '2023-10-10', paymentMethod: 'Amazon Pay', employeeId: '4', status: 'completed', recurring: false }
-];
+  return { incomeTransactions, expenseTransactions };
+};
 
-const expenseTransactions: ExpenseTransaction[] = [
-  // January 2024
-  { id: '1', name: 'AWS Cloud Services', category: 'Software', platform: 'Amazon Web Services', amount: 2450, date: '2024-01-14', paymentMethod: 'Credit Card', employeeId: '2', status: 'completed', businessPurpose: 'Infrastructure hosting' },
-  { id: '2', name: 'Google Ads Campaign Q1', category: 'Marketing', platform: 'Google Ads', amount: 6200, date: '2024-01-13', paymentMethod: 'Credit Card', employeeId: '4', status: 'completed', businessPurpose: 'Lead generation campaign' },
-  { id: '3', name: 'Office Supplies & Equipment', category: 'Operations', platform: 'Amazon Business', amount: 850, date: '2024-01-12', paymentMethod: 'Credit Card', employeeId: '1', status: 'completed', businessPurpose: 'General office supplies' },
-  { id: '4', name: 'Adobe Creative Suite Licenses', category: 'Software', platform: 'Adobe', amount: 1200, date: '2024-01-11', paymentMethod: 'Credit Card', employeeId: '8', status: 'completed', businessPurpose: 'Design software licenses' },
-  { id: '5', name: 'Team Building Lunch', category: 'Entertainment', platform: 'Local Restaurant', amount: 320, date: '2024-01-10', paymentMethod: 'Cash', employeeId: '3', status: 'completed', businessPurpose: 'Team morale event' },
-  { id: '6', name: 'Office Rent January', category: 'Office Rent', platform: 'Property Management', amount: 8500, date: '2024-01-01', paymentMethod: 'Bank Transfer', employeeId: '1', status: 'completed', businessPurpose: 'Monthly office rent' },
-  { id: '7', name: 'Internet & Phone Services', category: 'Utilities', platform: 'Telecom Provider', amount: 450, date: '2024-01-05', paymentMethod: 'Auto Pay', employeeId: '1', status: 'completed', businessPurpose: 'Monthly utilities' },
-  { id: '8', name: 'Business Insurance Premium', category: 'Insurance', platform: 'Insurance Co', amount: 1800, date: '2024-01-03', paymentMethod: 'Bank Transfer', employeeId: '1', status: 'completed', businessPurpose: 'Quarterly insurance premium' },
-  { id: '9', name: 'Employee Training Course', category: 'Training & Development', platform: 'Online Learning', amount: 950, date: '2024-01-08', paymentMethod: 'Credit Card', employeeId: '6', status: 'completed', businessPurpose: 'Professional development' },
-  { id: '10', name: 'Legal Consultation', category: 'Legal & Professional', platform: 'Law Firm', amount: 2200, date: '2024-01-09', paymentMethod: 'Check', employeeId: '1', status: 'completed', businessPurpose: 'Contract review' },
-  
-  // December 2023
-  { id: '11', name: 'Year-end Bonuses', category: 'Salaries', platform: 'Payroll', amount: 25000, date: '2023-12-31', paymentMethod: 'Bank Transfer', employeeId: '1', status: 'completed', businessPurpose: 'Employee bonuses' },
-  { id: '12', name: 'Conference Travel Expenses', category: 'Travel', platform: 'Travel Agency', amount: 3200, date: '2023-12-15', paymentMethod: 'Credit Card', employeeId: '2', status: 'completed', businessPurpose: 'Tech conference attendance' },
-  { id: '13', name: 'New Laptop Purchase', category: 'Equipment', platform: 'Apple Store', amount: 2800, date: '2023-12-10', paymentMethod: 'Credit Card', employeeId: '5', status: 'completed', businessPurpose: 'Developer equipment' },
-  { id: '14', name: 'Marketing Materials', category: 'Marketing', platform: 'Print Shop', amount: 680, date: '2023-12-08', paymentMethod: 'Credit Card', employeeId: '4', status: 'completed', businessPurpose: 'Trade show materials' },
-  { id: '15', name: 'Software Development Tools', category: 'Software', platform: 'JetBrains', amount: 1500, date: '2023-12-05', paymentMethod: 'Credit Card', employeeId: '5', status: 'completed', businessPurpose: 'Development IDE licenses' }
-];
+const { incomeTransactions, expenseTransactions } = generateHistoricalData();
 
 const assets: Asset[] = [
   // Physical Assets - Technology
@@ -784,6 +865,29 @@ class DataStore {
     }
 
     return cashFlow;
+  }
+
+  // New method to get monthly data for charts
+  getMonthlyData(months: number = 6): Array<{ month: string; revenue: number; expenses: number }> {
+    const now = new Date();
+    const data = [];
+
+    for (let i = months - 1; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const startDate = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+      const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      
+      const revenue = this.getTotalIncome(startDate, endDate);
+      const expenses = this.getTotalExpenses(startDate, endDate);
+      
+      data.push({
+        month: date.toLocaleDateString('en-US', { month: 'short' }),
+        revenue,
+        expenses
+      });
+    }
+
+    return data;
   }
 }
 
