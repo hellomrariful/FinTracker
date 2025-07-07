@@ -24,28 +24,22 @@ import {
 } from 'lucide-react';
 import { dataStore, type Asset } from '@/lib/data-store';
 import { toast } from 'sonner';
-import { useSearchParams } from 'next/navigation';
+type ClientAssetsProps = {
+  initialShowAddDialog?: boolean;
+};
 
-export function ClientAssets() {
+export function ClientAssets({ initialShowAddDialog = false }: ClientAssetsProps) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(initialShowAddDialog);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [isMounted, setIsMounted] = useState(false);
   
-  const searchParams = useSearchParams();
-
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
     setAssets(dataStore.getAssets());
-    if (isMounted && searchParams.get('add') === 'true') {
-      setIsAddDialogOpen(true);
-    }
-  }, [searchParams, isMounted]);
+  }, []);
 
   // Calculate totals
   const physicalAssets = assets.filter(a => a.category === 'physical');
