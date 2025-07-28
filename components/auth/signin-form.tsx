@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { BarChart3, Eye, EyeOff, Info } from 'lucide-react';
-import Link from 'next/link';
-import { toast } from 'sonner';
-import { signIn } from '@/lib/supabase/auth';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { BarChart3, Eye, EyeOff, Info } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { signIn } from "@/lib/auth/auth";
 
 export function SigninForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,36 +19,38 @@ export function SigninForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
     try {
-      const { user, error } = await signIn({ email, password });
-      
+      const { user, error } = await signIn(email, password);
+
       if (error) {
         toast.error(error.message);
         return;
       }
 
       if (user) {
-        toast.success('Welcome back!');
-        router.push('/dashboard');
+        toast.success("Welcome back!");
+        router.push("/dashboard");
       }
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
   const fillDemoCredentials = () => {
-    const emailInput = document.getElementById('email') as HTMLInputElement;
-    const passwordInput = document.getElementById('password') as HTMLInputElement;
-    
-    if (emailInput) emailInput.value = 'demo@fintracker.com';
-    if (passwordInput) passwordInput.value = 'fintracker123';
+    const emailInput = document.getElementById("email") as HTMLInputElement;
+    const passwordInput = document.getElementById(
+      "password"
+    ) as HTMLInputElement;
+
+    if (emailInput) emailInput.value = "demo@fintracker.com";
+    if (passwordInput) passwordInput.value = "fintracker123";
   };
 
   return (
@@ -70,16 +72,24 @@ export function SigninForm() {
         <div className="flex items-start gap-3">
           <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-primary mb-2">Demo Mode Active</h3>
+            <h3 className="text-sm font-semibold text-primary mb-2">
+              Demo Mode Active
+            </h3>
             <div className="space-y-1 text-sm text-foreground">
-              <div><strong>Any credentials work!</strong> Try the demo account:</div>
-              <div><strong>Email:</strong> demo@fintracker.com</div>
-              <div><strong>Password:</strong> fintracker123</div>
+              <div>
+                <strong>Any credentials work!</strong> Try the demo account:
+              </div>
+              <div>
+                <strong>Email:</strong> demo@fintracker.com
+              </div>
+              <div>
+                <strong>Password:</strong> fintracker123
+              </div>
             </div>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               className="mt-3 text-xs"
               onClick={fillDemoCredentials}
             >
@@ -109,7 +119,7 @@ export function SigninForm() {
               <Input
                 id="password"
                 name="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 required
                 className="pr-10"
@@ -151,19 +161,15 @@ export function SigninForm() {
           </Link>
         </div>
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? 'Signing in...' : 'Sign in'}
+        <Button type="submit" disabled={isLoading} className="w-full">
+          {isLoading ? "Signing in..." : "Sign in"}
         </Button>
 
         {/* Removed Google OAuth button */}
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Don't have an account?{' '}
+        Don't have an account?{" "}
         <Link
           href="/auth/signup"
           className="font-medium text-primary hover:text-primary/90"

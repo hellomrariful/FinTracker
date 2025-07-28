@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { BarChart3, Eye, EyeOff, Info, AlertCircle } from 'lucide-react';
-import Link from 'next/link';
-import { toast } from 'sonner';
-import { signUp } from '@/lib/supabase/auth';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { BarChart3, Eye, EyeOff, Info, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { signUp } from "@/lib/auth/auth";
 
 export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,13 +19,13 @@ export function SignupForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const firstName = formData.get('firstName') as string;
-    const lastName = formData.get('lastName') as string;
-    const company = formData.get('company') as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
+    const company = formData.get("company") as string;
 
     try {
       const { user, error } = await signUp({
@@ -33,20 +33,20 @@ export function SignupForm() {
         password,
         firstName,
         lastName,
-        company
+        company,
       });
-      
+
       if (error) {
         toast.error(error.message);
         return;
       }
 
       if (user) {
-        toast.success('Account created successfully! You are now signed in.');
-        router.push('/dashboard');
+        toast.success("Account created successfully! You are now signed in.");
+        router.push("/dashboard");
       }
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -71,9 +71,12 @@ export function SignupForm() {
         <div className="flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-200 mb-1">Judging Process Notice</h3>
+            <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-200 mb-1">
+              Judging Process Notice
+            </h3>
             <p className="text-sm text-orange-700 dark:text-orange-300">
-              For the judging process, we have temporarily stopped user validation. Any information will work to create an account.
+              For the judging process, we have temporarily stopped user
+              validation. Any information will work to create an account.
             </p>
           </div>
         </div>
@@ -84,17 +87,25 @@ export function SignupForm() {
         <div className="flex items-start gap-3">
           <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-primary mb-2">Demo Mode Active</h3>
+            <h3 className="text-sm font-semibold text-primary mb-2">
+              Demo Mode Active
+            </h3>
             <div className="space-y-1 text-sm text-foreground">
-              <div><strong>Any information works!</strong> Or use the demo account:</div>
-              <div><strong>Email:</strong> demo@fintracker.com</div>
-              <div><strong>Password:</strong> fintracker123</div>
+              <div>
+                <strong>Any information works!</strong> Or use the demo account:
+              </div>
+              <div>
+                <strong>Email:</strong> demo@fintracker.com
+              </div>
+              <div>
+                <strong>Password:</strong> fintracker123
+              </div>
             </div>
             <Link href="/auth/signin">
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
                 className="mt-3 text-xs"
               >
                 Use Demo Account
@@ -159,7 +170,7 @@ export function SignupForm() {
               <Input
                 id="password"
                 name="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 autoComplete="new-password"
                 required
                 className="pr-10"
@@ -192,30 +203,29 @@ export function SignupForm() {
             className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
           />
           <Label htmlFor="terms" className="ml-2 text-sm">
-            I agree to the{' '}
+            I agree to the{" "}
             <Link href="/terms" className="text-primary hover:text-primary/90">
               Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="text-primary hover:text-primary/90">
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/privacy"
+              className="text-primary hover:text-primary/90"
+            >
               Privacy Policy
             </Link>
           </Label>
         </div>
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? 'Creating account...' : 'Create account'}
+        <Button type="submit" disabled={isLoading} className="w-full">
+          {isLoading ? "Creating account..." : "Create account"}
         </Button>
 
         {/* Removed Google OAuth button and separator */}
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <Link
           href="/auth/signin"
           className="font-medium text-primary hover:text-primary/90"

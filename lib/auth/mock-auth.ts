@@ -1,4 +1,4 @@
-// Mock authentication system to bypass Supabase temporarily
+
 // This allows any credentials to work, especially demo credentials
 
 export interface MockUser {
