@@ -1,13 +1,14 @@
-import { Suspense } from 'react';
-import { ClientAssets } from './client-assets';
-import { DashboardSkeleton } from '@/components/loading-skeletons';
+import { Suspense } from "react";
+import { ClientAssets } from "./client-assets";
+import { DashboardSkeleton } from "@/components/loading-skeletons";
 
-export default function AssetsPage({
+export default async function AssetsPage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const showAddDialog = searchParams?.add === 'true';
+  const params = await searchParams;
+  const showAddDialog = params?.add === "true";
 
   return (
     <Suspense fallback={<DashboardSkeleton />}>
