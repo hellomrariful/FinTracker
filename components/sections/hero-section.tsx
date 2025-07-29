@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { VideoModal } from '@/components/ui/video-modal';
-import { ArrowRight, Play, TrendingUp, Shield, Zap } from 'lucide-react';
-import Link from 'next/link';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { VideoModal } from "@/components/ui/video-modal";
+import { ArrowRight, Play, TrendingUp, Shield, Zap } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 export function HeroSection() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -31,23 +32,27 @@ export function HeroSection() {
 
           {/* Headline */}
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-            Smart Financial 
+            Smart Financial
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent py-[5px]">
               Management
             </span>
             for Digital Businesses
           </h1>
 
-          {/* Subheadline */}
+          {/* Sub-headline */}
           <p className="mt-6 text-lg leading-8 text-muted-foreground sm:text-xl lg:text-2xl max-w-3xl mx-auto">
-            Take control of your finances with intelligent tracking, powerful analytics, 
-            and actionable insights. Built for modern businesses that demand more.
+            Take control of your finances with intelligent tracking, powerful
+            analytics, and actionable insights. Built for modern businesses that
+            demand more.
           </p>
 
           {/* CTA Buttons */}
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/auth/signup">
-              <Button size="lg" className="group relative overflow-hidden px-8 py-4 text-lg font-semibold">
+              <Button
+                size="lg"
+                className="group relative overflow-hidden px-8 py-4 text-lg font-semibold"
+              >
                 <span className="relative z-10 flex items-center">
                   Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -55,9 +60,9 @@ export function HeroSection() {
                 <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 transition-opacity group-hover:opacity-100" />
               </Button>
             </Link>
-            <Button 
-              variant="outline" 
-              size="lg" 
+            <Button
+              variant="outline"
+              size="lg"
               className="group px-8 py-4 text-lg font-semibold"
               onClick={handleWatchDemo}
             >
@@ -99,9 +104,11 @@ export function HeroSection() {
                 </div>
               </div>
               <div className="p-0">
-                <img 
-                  src="/Screenshot.png" 
-                  alt="Fintracker Dashboard Preview" 
+                <Image
+                  src="/dashboard.png"
+                  alt="FinTracker Dashboard Preview"
+                  width={1200}
+                  height={800}
                   className="w-full h-auto object-cover"
                 />
               </div>
@@ -115,7 +122,7 @@ export function HeroSection() {
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
         videoUrl="https://www.youtube.com/watch?v=7Dmozfs0Q44&ab_channel=ArifulIslam"
-        title="Fintracker Demo Video"
+        title="FinTracker Demo Video"
       />
     </div>
   );

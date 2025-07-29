@@ -1,11 +1,10 @@
-import { HeroSection } from '@/components/sections/hero-section';
-import { FeaturesSection } from '@/components/sections/features-section';
-import { StatsSection } from '@/components/sections/stats-section';
-import { TestimonialsSection } from '@/components/sections/testimonials-section';
-import { CTASection } from '@/components/sections/cta-section';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { LogoBadge } from '@/components/ui/logo-badge';
+import { HeroSection } from "@/components/sections/hero-section";
+import { FeaturesSection } from "@/components/sections/features-section";
+import { StatsSection } from "@/components/sections/stats-section";
+import { TestimonialsSection } from "@/components/sections/testimonials-section";
+import { CTASection } from "@/components/sections/cta-section";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 
 export default function Home() {
   return (
@@ -19,7 +18,6 @@ export default function Home() {
         <CTASection />
       </main>
       <Footer />
-      <LogoBadge />
     </div>
   );
 }

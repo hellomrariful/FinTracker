@@ -31,7 +31,7 @@ export function CTASection() {
               </Button>
             </Link>
             <Link href="/contact">
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold">
+              <Button size="lg" variant="outline" className="border-white/30 text-foreground bg-white/10 px-8 py-4 text-lg font-semibold">
                 Talk to Sales
               </Button>
             </Link>
