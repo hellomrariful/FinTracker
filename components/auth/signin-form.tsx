@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { BarChart3, Eye, EyeOff, Info } from "lucide-react";
+import { BarChart3, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { signIn } from "@/lib/auth/auth";
@@ -43,15 +43,6 @@ export function SigninForm() {
     }
   };
 
-  const fillDemoCredentials = () => {
-    const emailInput = document.getElementById("email") as HTMLInputElement;
-    const passwordInput = document.getElementById(
-      "password"
-    ) as HTMLInputElement;
-
-    if (emailInput) emailInput.value = "demo@fintracker.com";
-    if (passwordInput) passwordInput.value = "fintracker123";
-  };
 
   return (
     <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
@@ -67,37 +58,6 @@ export function SigninForm() {
         </p>
       </div>
 
-      {/* Demo Mode Banner */}
-      <div className="mt-6 bg-primary/10 border border-primary/20 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-primary mb-2">
-              Demo Mode Active
-            </h3>
-            <div className="space-y-1 text-sm text-foreground">
-              <div>
-                <strong>Any credentials work!</strong> Try the demo account:
-              </div>
-              <div>
-                <strong>Email:</strong> demo@fintracker.com
-              </div>
-              <div>
-                <strong>Password:</strong> fintracker123
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-3 text-xs"
-              onClick={fillDemoCredentials}
-            >
-              Use Demo Credentials
-            </Button>
-          </div>
-        </div>
-      </div>
 
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-4">
@@ -110,7 +70,7 @@ export function SigninForm() {
               autoComplete="email"
               required
               className="mt-1"
-              placeholder="Enter any email"
+              placeholder="Enter your email"
             />
           </div>
           <div>
@@ -123,7 +83,7 @@ export function SigninForm() {
                 autoComplete="current-password"
                 required
                 className="pr-10"
-                placeholder="Enter any password"
+                placeholder="Enter your password"
               />
               <button
                 type="button"
