@@ -1,32 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/db/mongodb';
-import Income from '@/lib/models/Income';
-import { authenticateUser } from '@/lib/middleware/auth';
+import { withAuth } from '@/lib/auth/protected-route';
+import * as apiResponse from '@/lib/api-response';
+import { incomeRepo } from '@/lib/repos/income';
 import { z } from 'zod';
+import { connectDB } from '@/lib/db';
+import Income from '@/lib/models/Income';
 
-// Query params schema
-const querySchema = z.object({
+const StatsQuerySchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  groupBy: z.enum(['day', 'week', 'month', 'year', 'category', 'source']).optional(),
+  groupBy: z.enum(['day', 'week', 'month', 'year']).optional().default('month'),
 });
 
 // GET /api/income/stats - Get income statistics
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (req: NextRequest, { auth }) => {
   try {
-    // Authenticate user
-    const authResult = await authenticateUser(request);
-    if (!authResult.authenticated) {
-      return authResult.response;
-    }
-
     // Parse query parameters
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const params = Object.fromEntries(searchParams);
     
     let validatedParams;
     try {
-      validatedParams = querySchema.parse(params);
+      validatedParams = StatsQuerySchema.parse(params);
     } catch (error) {
       return NextResponse.json(
         { error: 'Invalid query parameters', details: error },
@@ -40,7 +35,7 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     // Build base query
-    const baseQuery: any = { userId: authResult.user!.userId };
+    const baseQuery: any = { userId: auth.user.userId };
     
     // Add date range if provided
     if (startDate || endDate) {
@@ -241,7 +236,7 @@ export async function GET(request: NextRequest) {
       Income.aggregate([
         {
           $match: {
-            userId: authResult.user!.userId,
+            userId: auth.user.userId,
             date: { $gte: currentMonthStart },
             status: 'completed',
           },
@@ -251,7 +246,7 @@ export async function GET(request: NextRequest) {
       Income.aggregate([
         {
           $match: {
-            userId: authResult.user!.userId,
+            userId: auth.user.userId,
             date: { $gte: lastMonthStart, $lte: lastMonthEnd },
             status: 'completed',
           },
@@ -293,4 +288,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

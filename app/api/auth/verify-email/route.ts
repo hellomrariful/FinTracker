@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import crypto from 'crypto';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import { sendWelcomeEmail } from '@/lib/auth/email';
@@ -7,7 +8,7 @@ import { sendWelcomeEmail } from '@/lib/auth/email';
 // Validation schema
 const verifySchema = z.object({
   email: z.string().email('Invalid email address'),
-  token: z.string().min(1, 'Token is required'),
+  token: z.string().length(6, 'Verification code must be 6 digits').regex(/^\d{6}$/, 'Verification code must be 6 digits'),
 });
 
 export async function POST(request: NextRequest) {
@@ -19,10 +20,16 @@ export async function POST(request: NextRequest) {
     // Connect to database
     await connectDB();
 
+    // Hash the token to compare with database
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(validatedData.token)
+      .digest('hex');
+
     // Find user with verification token
     const user = await User.findOne({
       email: validatedData.email.toLowerCase(),
-      emailVerificationToken: validatedData.token,
+      emailVerificationToken: hashedToken,
       emailVerificationExpires: { $gt: new Date() },
     }).select('+emailVerificationToken +emailVerificationExpires');
 
@@ -93,10 +100,16 @@ export async function GET(request: NextRequest) {
     // Connect to database
     await connectDB();
 
+    // Hash the token to compare with database
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
     // Find user with verification token
     const user = await User.findOne({
       email: email.toLowerCase(),
-      emailVerificationToken: token,
+      emailVerificationToken: hashedToken,
       emailVerificationExpires: { $gt: new Date() },
     }).select('+emailVerificationToken +emailVerificationExpires');
 

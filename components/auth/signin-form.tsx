@@ -29,16 +29,18 @@ export function SigninForm() {
 
       if (error) {
         toast.error(error.message);
+        setIsLoading(false);
         return;
       }
 
       if (user) {
         toast.success("Welcome back!");
-        router.push("/dashboard");
+        // Use window.location.href for hard redirect to ensure cookies are properly set
+        // This avoids race conditions with Next.js client-side navigation
+        window.location.href = "/dashboard";
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -114,7 +116,7 @@ export function SigninForm() {
           </div>
 
           <Link
-            href="/auth/reset-password"
+            href="/auth/forgot-password"
             className="text-sm font-medium text-primary hover:text-primary/90"
           >
             Forgot password?

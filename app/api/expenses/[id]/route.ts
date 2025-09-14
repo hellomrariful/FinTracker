@@ -29,7 +29,7 @@ const updateExpenseSchema = z.object({
 // GET /api/expenses/[id] - Get single expense
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await authenticateUser(request);
@@ -37,7 +37,7 @@ export async function GET(
       return authResult.response;
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -73,9 +73,9 @@ export async function GET(
 }
 
 // PUT /api/expenses/[id] - Update expense
-export async function PUT(
+export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await authenticateUser(request);
@@ -83,7 +83,7 @@ export async function PUT(
       return authResult.response;
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -151,7 +151,7 @@ export async function PUT(
 // DELETE /api/expenses/[id] - Delete expense
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await authenticateUser(request);
@@ -159,7 +159,7 @@ export async function DELETE(
       return authResult.response;
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(

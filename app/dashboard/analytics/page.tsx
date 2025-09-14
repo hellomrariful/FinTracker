@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,162 +16,57 @@ import {
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
-  User
+  User,
+  Loader2
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { dataStore } from '@/lib/data-store';
+import { toast } from 'sonner';
+
+interface AnalyticsData {
+  totalIncome: number;
+  totalExpenses: number;
+  netProfit: number;
+  profitMargin: number;
+  roi: number;
+  revenueGrowth: number;
+  profitGrowth: number;
+  incomeByCategory: Array<{ name: string; value: number; color: string; }>;
+  expenseByCategory: Array<{ name: string; value: number; color: string; }>;
+  revenueVsExpenses: Array<{ month: string; revenue: number; expenses: number; }>;
+  topIncomeSources: Array<[string, number]>;
+  topExpenseCategories: Array<[string, number]>;
+  topEmployee?: { name: string; totalIncome: number; avatar?: string; };
+}
 
 export default function AnalyticsPage() {
   const [timeFrame, setTimeFrame] = useState('last-month');
+  const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
 
-  // Calculate date ranges based on timeframe
-  const getDateRange = (frame: string) => {
-    const now = new Date();
-    let startDate: string, endDate: string;
+  // Fetch analytics data
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [timeFrame]);
 
-    switch (frame) {
-      case 'daily':
-        startDate = endDate = now.toISOString().split('T')[0];
-        break;
-      case 'last-7-days':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        endDate = now.toISOString().split('T')[0];
-        break;
-      case 'last-month':
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-        startDate = lastMonth.toISOString().split('T')[0];
-        endDate = lastMonthEnd.toISOString().split('T')[0];
-        break;
-      case 'last-3-months':
-        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString().split('T')[0];
-        endDate = now.toISOString().split('T')[0];
-        break;
-      case 'ytd':
-        startDate = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
-        endDate = now.toISOString().split('T')[0];
-        break;
-      default:
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
-    }
-
-    return { startDate, endDate };
-  };
-
-  const { startDate, endDate } = getDateRange(timeFrame);
-
-  // Get data for selected timeframe
-  const totalIncome = dataStore.getTotalIncome(startDate, endDate);
-  const totalExpenses = dataStore.getTotalExpenses(startDate, endDate);
-  const netProfit = totalIncome - totalExpenses;
-  const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
-  const roi = totalExpenses > 0 ? (netProfit / totalExpenses) * 100 : 0;
-
-  // Get previous period for comparison
-  const getPreviousPeriod = (frame: string) => {
-    const now = new Date();
-    switch (frame) {
-      case 'last-month':
-        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-        const prevMonthEnd = new Date(now.getFullYear(), now.getMonth() - 1, 0);
-        return {
-          startDate: prevMonth.toISOString().split('T')[0],
-          endDate: prevMonthEnd.toISOString().split('T')[0]
-        };
-      case 'last-3-months':
-        return {
-          startDate: new Date(now.getFullYear(), now.getMonth() - 6, 1).toISOString().split('T')[0],
-          endDate: new Date(now.getFullYear(), now.getMonth() - 3, 0).toISOString().split('T')[0]
-        };
-      default:
-        return { startDate: '', endDate: '' };
-    }
-  };
-
-  const previousPeriod = getPreviousPeriod(timeFrame);
-  const prevIncome = dataStore.getTotalIncome(previousPeriod.startDate, previousPeriod.endDate);
-  const prevExpenses = dataStore.getTotalExpenses(previousPeriod.startDate, previousPeriod.endDate);
-  const prevProfit = prevIncome - prevExpenses;
-
-  // Calculate growth rates
-  const revenueGrowth = prevIncome > 0 ? ((totalIncome - prevIncome) / prevIncome) * 100 : 0;
-  const profitGrowth = prevProfit > 0 ? ((netProfit - prevProfit) / prevProfit) * 100 : 0;
-
-  // Get top employee for selected period
-  const topEmployee = dataStore.getTopEmployee(startDate, endDate);
-
-  // Generate revenue vs expenses data for the last 6 months using actual data
-  const generateRevenueVsExpensesData = () => {
-    const data = [];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    
-    for (let i = 5; i >= 0; i--) {
-      const now = new Date();
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthStart = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
-      const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+  const fetchAnalyticsData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/analytics?timeFrame=${timeFrame}`);
       
-      const monthIncome = dataStore.getTotalIncome(monthStart, monthEnd);
-      const monthExpenses = dataStore.getTotalExpenses(monthStart, monthEnd);
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics data');
+      }
       
-      data.push({
-        month: months[5 - i] || date.toLocaleDateString('en-US', { month: 'short' }),
-        revenue: monthIncome || 0,
-        expenses: monthExpenses || 0
-      });
+      const result = await response.json();
+      setAnalyticsData(result.data);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      toast.error('Failed to load analytics data');
+    } finally {
+      setLoading(false);
     }
-    
-    return data;
   };
 
-  const revenueVsExpensesData = generateRevenueVsExpensesData();
-
-  // Get income by category
-  const incomeTransactions = dataStore.getIncomeTransactions().filter(t => {
-    const date = new Date(t.date);
-    return date >= new Date(startDate) && date <= new Date(endDate);
-  });
-
-  const incomeByCategory = incomeTransactions.reduce((acc, transaction) => {
-    acc[transaction.category] = (acc[transaction.category] || 0) + transaction.amount;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const incomeCategoryData = Object.entries(incomeByCategory).map(([name, value], index) => ({
-    name,
-    value,
-    color: `hsl(var(--chart-${(index % 5) + 1}))`
-  }));
-
-  // Get expense by category
-  const expenseTransactions = dataStore.getExpenseTransactions().filter(t => {
-    const date = new Date(t.date);
-    return date >= new Date(startDate) && date <= new Date(endDate);
-  });
-
-  const expenseByCategory = expenseTransactions.reduce((acc, transaction) => {
-    acc[transaction.category] = (acc[transaction.category] || 0) + transaction.amount;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const expenseCategoryData = Object.entries(expenseByCategory).map(([name, value], index) => ({
-    name,
-    value,
-    color: `hsl(var(--chart-${(index % 5) + 1}))`
-  }));
-
-  // Get top sources and categories
-  const topIncomeSources = Object.entries(
-    incomeTransactions.reduce((acc, t) => {
-      acc[t.source] = (acc[t.source] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>)
-  ).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
-  const topExpenseCategories = Object.entries(expenseByCategory)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
 
   const handleExportPDF = () => {
     // In a real app, this would generate and download a PDF report
@@ -182,6 +77,44 @@ export default function AnalyticsPage() {
     // In a real app, this would generate and download a CSV file
     alert('CSV export functionality would be implemented here');
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show error state if no data
+  if (!analyticsData) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No analytics data available</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const {
+    totalIncome,
+    totalExpenses,
+    netProfit,
+    profitMargin,
+    roi,
+    revenueGrowth,
+    profitGrowth,
+    incomeByCategory: incomeCategoryData,
+    expenseByCategory: expenseCategoryData,
+    revenueVsExpenses: revenueVsExpensesData,
+    topIncomeSources,
+    topExpenseCategories,
+    topEmployee
+  } = analyticsData;
 
   return (
     <DashboardLayout>
@@ -444,30 +377,22 @@ export default function AnalyticsPage() {
                 <div className="space-y-6">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-16 w-16">
-                      <AvatarImage src={topEmployee.employee.avatar} />
+                      <AvatarImage src={topEmployee.avatar} />
                       <AvatarFallback>
-                        {topEmployee.employee.name.split(' ').map(n => n[0]).join('')}
+                        {topEmployee.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="text-lg font-semibold">{topEmployee.employee.name}</h3>
-                      <p className="text-sm text-muted-foreground">{topEmployee.employee.role}</p>
+                      <h3 className="text-lg font-semibold">{topEmployee.name}</h3>
+                      <p className="text-sm text-muted-foreground">Top Performer</p>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-primary/10 rounded-lg border border-primary/20">
-                      <div className="text-2xl font-bold text-primary">
-                        ${topEmployee.income.toLocaleString()}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Total Income</p>
+                  <div className="text-center p-4 bg-primary/10 rounded-lg border border-primary/20">
+                    <div className="text-3xl font-bold text-primary">
+                      ${topEmployee.totalIncome.toLocaleString()}
                     </div>
-                    <div className="text-center p-4 bg-accent/10 rounded-lg border border-accent/20">
-                      <div className="text-2xl font-bold text-accent">
-                        {topEmployee.transactions}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Transactions</p>
-                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">Total Income Generated</p>
                   </div>
                 </div>
               ) : (

@@ -24,6 +24,14 @@ export interface IExpense extends Document {
   taxDeductible?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  // Instance methods
+  needsApproval(): boolean;
+}
+
+export interface IExpenseModel extends mongoose.Model<IExpense> {
+  getTotalExpenses(userId: string, startDate?: Date, endDate?: Date): Promise<number>;
+  getExpensesByCategory(userId: string, startDate?: Date, endDate?: Date): Promise<any[]>;
+  getPendingReimbursements(userId?: string): Promise<IExpense[]>;
 }
 
 const expenseSchema = new Schema<IExpense>({
@@ -206,6 +214,6 @@ expenseSchema.statics.getPendingReimbursements = async function(userId?: string)
     .sort({ date: -1 });
 };
 
-const Expense = mongoose.models.Expense || mongoose.model<IExpense>('Expense', expenseSchema);
+const Expense = (mongoose.models.Expense || mongoose.model<IExpense, IExpenseModel>('Expense', expenseSchema)) as IExpenseModel;
 
 export default Expense;

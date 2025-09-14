@@ -18,6 +18,13 @@ export interface IIncome extends Document {
   tags?: string[];
   createdAt: Date;
   updatedAt: Date;
+  // Instance methods
+  isOverdue(): boolean;
+}
+
+export interface IIncomeModel extends mongoose.Model<IIncome> {
+  getTotalIncome(userId: string, startDate?: Date, endDate?: Date): Promise<number>;
+  getIncomeByCategory(userId: string, startDate?: Date, endDate?: Date): Promise<any[]>;
 }
 
 const incomeSchema = new Schema<IIncome>({
@@ -164,6 +171,6 @@ incomeSchema.statics.getIncomeByCategory = async function(
   ]);
 };
 
-const Income = mongoose.models.Income || mongoose.model<IIncome>('Income', incomeSchema);
+const Income = (mongoose.models.Income || mongoose.model<IIncome, IIncomeModel>('Income', incomeSchema)) as IIncomeModel;
 
 export default Income;

@@ -32,14 +32,42 @@ A comprehensive financial management platform built with Next.js, Supabase, and 
 ### Environment Setup
 
 1. Clone the repository
-2. Copy `.env.local.example` to `.env.local`
-3. Fill in your Supabase credentials:
+2. Copy `.env.example` to `.env.local`:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-```
+3. Configure required environment variables:
+
+   **Required Variables:**
+   - `MONGODB_URI` - MongoDB connection string (local or Atlas)
+   - `JWT_ACCESS_SECRET` - JWT access token secret (min 32 chars)
+   - `JWT_REFRESH_SECRET` - JWT refresh token secret (min 32 chars)
+
+   **Generate secure secrets:**
+   ```bash
+   # Generate JWT secrets
+   openssl rand -base64 32
+   ```
+
+4. Validate your environment:
+   ```bash
+   npm run validate:env
+   ```
+
+5. Optional services (for full functionality):
+   - Redis for caching: Set `REDIS_URL`
+   - Email sending: Configure `SMTP_*` variables
+   - File uploads: Set `BLOB_READ_WRITE_TOKEN` from Vercel
+
+### Vercel Deployment Setup
+
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables in Project Settings:
+   - All required variables from `.env.example`
+   - Set `NODE_VERSION=20` for Node.js 20 LTS
+4. Deploy
 
 ### Database Setup
 

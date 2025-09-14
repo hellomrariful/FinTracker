@@ -127,7 +127,7 @@ categorySchema.statics.getCategoriesWithStats = async function(
   const Expense = mongoose.model('Expense');
   
   const categoriesWithStats = await Promise.all(
-    categories.map(async (category) => {
+    categories.map(async (category: any) => {
       let incomeTotal = 0;
       let incomeCount = 0;
       let expenseTotal = 0;

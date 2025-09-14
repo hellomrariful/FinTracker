@@ -178,7 +178,7 @@ goalSchema.methods.updateProgress = function(amount: number) {
   
   // Check and update milestones
   if (this.milestones && this.milestones.length > 0) {
-    this.milestones.forEach(milestone => {
+    this.milestones.forEach((milestone: any) => {
       if (!milestone.completed && this.currentAmount >= milestone.targetAmount) {
         milestone.completed = true;
         milestone.completedDate = new Date();
@@ -291,7 +291,7 @@ goalSchema.statics.getGoalsNeedingReminders = async function(userId?: string) {
   if (userId) query.userId = userId;
   
   const goals = await this.find(query);
-  return goals.filter(goal => goal.needsAttention && goal.needsAttention());
+  return goals.filter((goal: any) => goal.needsAttention && goal.needsAttention());
 };
 
 const Goal = mongoose.models.Goal || mongoose.model<IGoal>('Goal', goalSchema);

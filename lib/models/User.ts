@@ -15,6 +15,7 @@ export interface IUser extends Document {
   emailVerificationExpires?: Date;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
+  lastPasswordChange?: Date;
   lastLogin?: Date;
   isActive: boolean;
   metadata?: {
@@ -95,6 +96,10 @@ const userSchema = new Schema<IUser>(
       type: Date,
       select: false,
     },
+    lastPasswordChange: {
+      type: Date,
+      default: null,
+    },
     lastLogin: {
       type: Date,
       default: null,
@@ -154,14 +159,22 @@ userSchema.methods.comparePassword = async function (
   }
 };
 
-// Generate email verification token
+// Generate email verification token (6-digit code)
 userSchema.methods.generateEmailVerificationToken = function (): string {
-  const token = Math.random().toString(36).substring(2, 15) + 
-                Math.random().toString(36).substring(2, 15);
+  // Generate a 6-digit verification code
+  const token = Math.floor(100000 + Math.random() * 900000).toString();
   
-  this.emailVerificationToken = token;
+  // Store the hashed version in the database for security
+  const crypto = require('crypto');
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(token)
+    .digest('hex');
+  
+  this.emailVerificationToken = hashedToken;
   this.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
   
+  // Return the plain token to be sent to the user
   return token;
 };
 

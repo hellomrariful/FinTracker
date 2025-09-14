@@ -277,11 +277,11 @@ employeeSchema.methods.addPerformanceReview = function(
   
   // Update overall performance score (weighted average of recent reviews)
   const recentReviews = this.performanceReviews
-    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .sort((a: any, b: any) => b.date.getTime() - a.date.getTime())
     .slice(0, 3); // Consider last 3 reviews
   
   if (recentReviews.length > 0) {
-    const avgScore = recentReviews.reduce((sum, review) => sum + review.score, 0) / recentReviews.length;
+    const avgScore = recentReviews.reduce((sum: number, review: any) => sum + review.score, 0) / recentReviews.length;
     this.performance = Math.round(avgScore);
   }
   
@@ -310,7 +310,7 @@ employeeSchema.statics.getTeamStatistics = async function(userId: string) {
   let totalYears = 0;
   let totalCompensation = 0;
   
-  employees.forEach(emp => {
+  employees.forEach((emp: any) => {
     const annualSalary = emp.annualSalary || 0;
     totalSalary += annualSalary;
     totalPerformance += emp.performance || 0;

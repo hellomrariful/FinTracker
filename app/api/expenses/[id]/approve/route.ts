@@ -14,7 +14,7 @@ const approvalSchema = z.object({
 // POST /api/expenses/[id]/approve - Approve/reject expense reimbursement
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResult = await authenticateUser(request);
@@ -31,7 +31,7 @@ export async function POST(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(

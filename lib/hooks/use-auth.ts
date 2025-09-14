@@ -2,25 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { User, UserProfile } from "@/lib/types/auth";
-import { mockAuth, type MockUser } from "@/lib/auth/mock-auth";
-import { getUserProfile } from "@/lib/auth/auth";
+import { getCurrentUser, getUserProfile } from "@/lib/auth/auth";
 
 interface AuthState {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
   error: string | null;
-}
-
-// Convert MockUser to User type
-function convertMockUserToUser(mockUser: MockUser): User {
-  return {
-    id: mockUser.id,
-    email: mockUser.email,
-    name: mockUser.user_metadata.full_name,
-    avatar: undefined,
-    created_at: new Date().toISOString(),
-  };
 }
 
 export function useAuth() {
@@ -34,13 +22,11 @@ export function useAuth() {
   useEffect(() => {
     const getInitialSession = async () => {
       try {
-        const {
-          data: { session },
-        } = await mockAuth.getSession();
+        // Use the actual API to get current user
+        const user = await getCurrentUser();
 
-        if (session?.user) {
-          const user = convertMockUserToUser(session.user);
-          const profileResponse = await getUserProfile(session.user.id);
+        if (user) {
+          const profileResponse = await getUserProfile(user.id);
 
           setAuthState({
             user,
@@ -67,32 +53,15 @@ export function useAuth() {
 
     getInitialSession();
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = mockAuth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const user = convertMockUserToUser(session.user);
-        const profileResponse = await getUserProfile(session.user.id);
+    // Re-check auth state when window focuses (handles cross-tab sessions)
+    const handleFocus = () => {
+      getInitialSession();
+    };
 
-        setAuthState({
-          user,
-          profile: profileResponse.data,
-          loading: false,
-          error: profileResponse.error?.message || null,
-        });
-      } else {
-        setAuthState({
-          user: null,
-          profile: null,
-          loading: false,
-          error: null,
-        });
-      }
-    });
+    window.addEventListener('focus', handleFocus);
 
     return () => {
-      subscription.unsubscribe();
+      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 

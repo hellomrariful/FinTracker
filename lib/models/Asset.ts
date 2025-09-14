@@ -20,7 +20,7 @@ export interface IAsset extends Document {
   assignedTo?: mongoose.Types.ObjectId;
   serialNumber?: string;
   manufacturer?: string;
-  model?: string;
+  modelNumber?: string;
   notes?: string;
   attachments?: string[];
   tags?: string[];
@@ -29,6 +29,17 @@ export interface IAsset extends Document {
   disposalValue?: number;
   createdAt: Date;
   updatedAt: Date;
+  // Instance methods
+  calculateDepreciatedValue(): number;
+  isUnderWarranty(): boolean;
+  isMaintenanceDue(daysBefore?: number): boolean;
+  ageInMonths?: number;
+}
+
+export interface IAssetModel extends mongoose.Model<IAsset> {
+  getTotalAssetValue(userId: string, category?: string): Promise<number>;
+  getAssetsByCategory(userId: string): Promise<any[]>;
+  getAssetsNeedingMaintenance(userId: string): Promise<IAsset[]>;
 }
 
 const assetSchema = new Schema<IAsset>({
@@ -115,7 +126,7 @@ const assetSchema = new Schema<IAsset>({
     type: String,
     trim: true,
   },
-  model: {
+  modelNumber: {
     type: String,
     trim: true,
   },
@@ -235,7 +246,7 @@ assetSchema.statics.getTotalAssetValue = async function(
   if (category) query.category = category;
   
   const assets = await this.find(query);
-  return assets.reduce((total, asset) => {
+  return assets.reduce((total: number, asset: any) => {
     return total + (asset.calculateDepreciatedValue ? asset.calculateDepreciatedValue() : 0);
   }, 0);
 };
@@ -265,9 +276,9 @@ assetSchema.statics.getAssetsNeedingMaintenance = async function(userId: string)
     lastMaintenanceDate: { $exists: true },
   });
   
-  return assets.filter(asset => asset.isMaintenanceDue && asset.isMaintenanceDue());
+  return assets.filter((asset: any) => asset.isMaintenanceDue && asset.isMaintenanceDue());
 };
 
-const Asset = mongoose.models.Asset || mongoose.model<IAsset>('Asset', assetSchema);
+const Asset = (mongoose.models.Asset || mongoose.model<IAsset, IAssetModel>('Asset', assetSchema)) as IAssetModel;
 
 export default Asset;
