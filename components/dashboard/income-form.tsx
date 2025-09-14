@@ -282,24 +282,24 @@ export function IncomeForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="employeeId">Employee (Optional)</Label>
-          <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select employee (optional)" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">No Employee</SelectItem>
-              {employees && employees.length > 0 && 
-                employees.map((employee) => (
+        {employees && employees.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="employeeId">Employee (Optional)</Label>
+            <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select employee (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No Employee</SelectItem>
+                {employees.map((employee) => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {employee.name} - {employee.role}
                   </SelectItem>
-                ))
-              }
-            </SelectContent>
-          </Select>
-        </div>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <DialogFooter>
