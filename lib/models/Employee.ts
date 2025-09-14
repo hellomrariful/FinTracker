@@ -209,7 +209,7 @@ const employeeSchema = new Schema<IEmployee>({
 employeeSchema.index({ userId: 1, status: 1 });
 employeeSchema.index({ userId: 1, department: 1 });
 employeeSchema.index({ userId: 1, role: 1 });
-employeeSchema.index({ email: 1 });
+// Note: email already has an index from unique: true constraint
 
 // Virtual for years of service
 employeeSchema.virtual('yearsOfService').get(function() {

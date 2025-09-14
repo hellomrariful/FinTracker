@@ -96,46 +96,48 @@ export function DashboardOverview() {
 
         // Fetch current month data using authenticated API client
         const [currentIncome, currentExpenses, lastIncome, lastExpenses, historicalData, categories] = await Promise.all([
-          api.get(`/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
-          api.get(`/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
-          api.get(`/api/income/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
-          api.get(`/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
-          api.get(`/api/income/statistics?months=6`),
-          api.get(`/api/expenses/statistics?groupBy=category`)
+          api.get<any>(`/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
+          api.get<any>(`/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
+          api.get<any>(`/api/income/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
+          api.get<any>(`/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
+          api.get<any>(`/api/income/statistics?months=6`),
+          api.get<any>(`/api/expenses/statistics?groupBy=category`)
         ]);
 
         // Fetch recent transactions
-        const recentTransactions = await api.get('/api/transactions/recent?limit=5');
+        const recentTransactions = await api.get<any>('/api/transactions/recent?limit=5');
         
         // Fetch employee performance
-        const employeeStats = await api.get('/api/employees/performance?months=1');
+        const employeeStats = await api.get<any>('/api/employees/performance?months=1');
 
-        const expenseCategories = categories.data.map((cat: any, index: number) => ({
-          category: cat.category,
-          amount: cat.total,
-          percentage: Math.round((cat.total / categories.totalAmount) * 100),
-          normalized: Math.round((cat.total / Math.max(...categories.data.map((c: any) => c.total))) * 100),
-          color: `hsl(var(--chart-${(index % 5) + 1}))`
-        }));
+        const expenseCategories = categories?.data && Array.isArray(categories.data) 
+          ? categories.data.map((cat: any, index: number) => ({
+              category: cat.category,
+              amount: cat.total,
+              percentage: Math.round((cat.total / (categories.totalAmount || 1)) * 100),
+              normalized: Math.round((cat.total / Math.max(...categories.data.map((c: any) => c.total), 1)) * 100),
+              color: `hsl(var(--chart-${(index % 5) + 1}))`
+            }))
+          : [];
 
         setData({
           currentMonth: {
-            totalIncome: currentIncome.total,
-            totalExpenses: currentExpenses.total,
-            totalTransactions: currentIncome.count + currentExpenses.count
+            totalIncome: currentIncome?.total || 0,
+            totalExpenses: currentExpenses?.total || 0,
+            totalTransactions: (currentIncome?.count || 0) + (currentExpenses?.count || 0)
           },
           lastMonth: {
-            totalIncome: lastIncome.total,
-            totalExpenses: lastExpenses.total,
-            totalTransactions: lastIncome.count + lastExpenses.count
+            totalIncome: lastIncome?.total || 0,
+            totalExpenses: lastExpenses?.total || 0,
+            totalTransactions: (lastIncome?.count || 0) + (lastExpenses?.count || 0)
           },
           expenseCategories,
-          recentTransactions: recentTransactions.data,
-          employeePerformance: employeeStats.data
+          recentTransactions: recentTransactions?.data || [],
+          employeePerformance: employeeStats?.data || []
         });
 
         // Set chart data
-        setChartData(historicalData.monthlyData);
+        setChartData(historicalData?.monthlyData || []);
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);

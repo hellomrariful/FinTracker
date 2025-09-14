@@ -76,7 +76,7 @@ export function BudgetsClient() {
   const fetchBudgets = async () => {
     try {
       const data = await api.get<{ data: Budget[] }>('/api/budgets');
-      setBudgets(data.data || []);
+      setBudgets(data?.data || []);
     } catch (error) {
       toast.error('Failed to load budgets');
       console.error(error);

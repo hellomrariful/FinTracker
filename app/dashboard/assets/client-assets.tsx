@@ -89,12 +89,15 @@ export function ClientAssets({
   const fetchAssets = async () => {
     try {
       setIsLoading(true);
-      const result = await api.get<{ data: any[] }>('/api/assets');
+      const result = await api.get<{ assets: any[], pagination?: any }>('/api/assets');
       // Map _id to id for consistency
-      const mappedAssets = result.data.map((asset: any) => ({
-        ...asset,
-        id: asset._id || asset.id
-      }));
+      const assetsData = result?.assets || [];
+      const mappedAssets = Array.isArray(assetsData) 
+        ? assetsData.map((asset: any) => ({
+            ...asset,
+            id: asset._id || asset.id
+          }))
+        : [];
       setAssets(mappedAssets);
     } catch (error) {
       console.error('Error fetching assets:', error);

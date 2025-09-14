@@ -127,9 +127,9 @@ export function ClientIncome({
 
       // Fetch all required data in parallel using authenticated API client
       const [incomeResponse, employeesResponse, categoriesResponse, statsResponse] = await Promise.all([
-        api.get<{ data: IncomeTransaction[] }>('/api/income'),
-        api.get<{ data: Employee[] }>('/api/employees'),
-        api.get<{ data: Category[] }>('/api/categories?type=income'),
+        api.get<{ incomes: IncomeTransaction[], pagination?: any, stats?: any }>('/api/income'),
+        api.get<{ success: boolean, data: Employee[] }>('/api/employees'),
+        api.get<Category[]>('/api/categories?type=income'),
         Promise.all([
           api.get<{ data: { statistics: any } }>('/api/income/statistics'),
           api.get<{ data: { statistics: any } }>(`/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
@@ -138,18 +138,21 @@ export function ClientIncome({
         ])
       ]);
 
-      // Set income transactions
-      setIncomeTransactions(incomeResponse.data);
+      // Set income transactions - ensure it's always an array
+      const incomeData = incomeResponse?.incomes || [];
+      setIncomeTransactions(Array.isArray(incomeData) ? incomeData : []);
       
       // Set employees
-      setEmployees(employeesResponse.data);
+      const employeesData = employeesResponse?.data || [];
+      setEmployees(Array.isArray(employeesData) ? employeesData : []);
       
-      // Set categories
-      setCategories(categoriesResponse.data);
+      // Set categories - this comes as direct array
+      const categoriesData = Array.isArray(categoriesResponse) ? categoriesResponse : [];
+      setCategories(categoriesData);
 
       // Extract and process statistics
       const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] = statsResponse;
-      const topEmployee = employeeStats.data[0]; // First employee is the top earner due to sorting
+      const topEmployee = employeeStats?.data?.[0]; // First employee is the top earner due to sorting
       
       // Get total income from statistics response
       const lifetimeTotal = lifetimeStats.data?.statistics?.totalIncome || 0;
@@ -164,7 +167,7 @@ export function ClientIncome({
       const bySource = lifetimeStats.data?.statistics?.incomeBySource?.reduce((acc: Record<string, number>, item: any) => {
         acc[item._id] = item.total;
         return acc;
-      }, {}) || incomeResponse.data.reduce((acc: Record<string, number>, inc: IncomeTransaction) => {
+      }, {}) || incomeData.reduce((acc: Record<string, number>, inc: IncomeTransaction) => {
         acc[inc.source] = (acc[inc.source] || 0) + inc.amount;
         return acc;
       }, {});
@@ -179,7 +182,7 @@ export function ClientIncome({
         lastMonthIncome: lastMonthTotal,
         incomeGrowth,
         bySource,
-        byEmployee: employeeStats.data.reduce((acc: Record<string, number>, emp: any) => {
+        byEmployee: (employeeStats?.data || []).reduce((acc: Record<string, number>, emp: any) => {
           acc[emp.id] = emp.totalIncome;
           return acc;
         }, {}),
@@ -201,23 +204,25 @@ export function ClientIncome({
   }, []);
 
   // Get unique sources for dropdown - filter out empty strings
-  const existingSources = [
-    ...new Set(incomeTransactions.map(t => t.source)),
-  ].filter(source => source && source.trim() !== '');
+  const existingSources = Array.isArray(incomeTransactions) 
+    ? [...new Set(incomeTransactions.map(t => t.source))].filter(source => source && source.trim() !== '')
+    : [];
 
   // Filter income transactions based on search
-  const filteredIncomeTransactions = incomeTransactions.filter(
-    (income) =>
-      income.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      income.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      income.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (income.platform &&
-        income.platform.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      employees
-        .find((e) => e.id === income.employeeId)
-        ?.name.toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
+  const filteredIncomeTransactions = Array.isArray(incomeTransactions) 
+    ? incomeTransactions.filter(
+        (income) =>
+          income.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          income.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          income.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (income.platform &&
+            income.platform.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          employees
+            .find((e) => e.id === income.employeeId)
+            ?.name.toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   const handleSuccess = () => {
     fetchData();

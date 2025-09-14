@@ -148,36 +148,44 @@ export function ClientExpenses({
 
       // Fetch all required data in parallel using authenticated API client
       const [expensesResponse, employeesResponse, categoriesResponse, statsResponse] = await Promise.all([
-        api.get<ExpenseTransaction[]>('/api/expenses'),
-        api.get<Employee[]>('/api/employees'),
+        api.get<{ expenses: ExpenseTransaction[], pagination?: any, stats?: any }>('/api/expenses'),
+        api.get<{ success: boolean, data: Employee[] }>('/api/employees'),
         api.get<Category[]>('/api/categories?type=expense'),
         Promise.all([
-          api.get<StatsData>('/api/expenses/statistics'),
-          api.get<StatsData>(`/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
-          api.get<StatsData>(`/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
-          api.get<EmployeeSpendingData[]>('/api/employees/spending?months=1')
+          api.get<{ data: { statistics: { totalExpenses: number } } }>('/api/expenses/statistics'),
+          api.get<{ data: { statistics: { totalExpenses: number } } }>(`/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
+          api.get<{ data: { statistics: { totalExpenses: number } } }>(`/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
+          api.get<{ data: EmployeeSpendingData[] }>('/api/employees/spending?months=1')
         ])
       ]);
 
-      // Set expenses
-      setExpenses(expensesResponse);
+      // Set expenses - extract from expenses property
+      const expensesData = expensesResponse?.expenses || [];
+      setExpenses(Array.isArray(expensesData) ? expensesData : []);
       
       // Set employees
-      setEmployees(employeesResponse);
+      const employeesData = employeesResponse?.data || [];
+      setEmployees(Array.isArray(employeesData) ? employeesData : []);
       
-      // Set categories
-      setCategories(categoriesResponse);
+      // Set categories - this comes as direct array
+      const categoriesData = Array.isArray(categoriesResponse) ? categoriesResponse : [];
+      setCategories(categoriesData);
 
       // Extract and process statistics
       const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] = statsResponse;
-      const topEmployee = employeeStats[0]; // First employee is the top spender due to sorting
+      const employeeStatsData = employeeStats?.data || [];
+      const topEmployee = employeeStatsData[0]; // First employee is the top spender due to sorting
       
-      const expenseGrowth = lastMonthStats.total > 0
-        ? ((currentMonthStats.total - lastMonthStats.total) / lastMonthStats.total) * 100
+      const lifetimeTotal = lifetimeStats?.data?.statistics?.totalExpenses || 0;
+      const currentMonthTotal = currentMonthStats?.data?.statistics?.totalExpenses || 0;
+      const lastMonthTotal = lastMonthStats?.data?.statistics?.totalExpenses || 0;
+      
+      const expenseGrowth = lastMonthTotal > 0
+        ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
         : 0;
 
       // Compute category stats from the expenses
-      const byCategory = expensesResponse.reduce((acc: Record<string, number>, exp: ExpenseTransaction) => {
+      const byCategory = expensesData.reduce((acc: Record<string, number>, exp: ExpenseTransaction) => {
         acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
         return acc;
       }, {});
@@ -187,13 +195,13 @@ export function ClientExpenses({
         .at(0) || ['', 0];
 
       setStats({
-        lifetimeExpenses: lifetimeStats.total,
-        thisMonthExpenses: currentMonthStats.total,
-        lastMonthExpenses: lastMonthStats.total,
+        lifetimeExpenses: lifetimeTotal,
+        thisMonthExpenses: currentMonthTotal,
+        lastMonthExpenses: lastMonthTotal,
         expenseGrowth,
         byCategory,
         highestCategory,
-        byEmployee: employeeStats.reduce((acc: Record<string, number>, emp: any) => {
+        byEmployee: employeeStatsData.reduce((acc: Record<string, number>, emp: any) => {
           acc[emp.id] = emp.totalSpent;
           return acc;
         }, {}),
@@ -250,16 +258,19 @@ export function ClientExpenses({
       
       // Create new category if needed
       if (selectedCategory === "new" && newCategory.trim()) {
-        const newCat: { data: Category } = await api.post('/api/categories', {
+        const newCat = await api.post<any>('/api/categories', {
           name: newCategory.trim(),
           type: 'expense'
         });
         
-        categoryName = newCat.data.name;
+        // Handle both possible response structures
+        categoryName = newCat?.data?.name || newCat?.name || newCategory.trim();
         
         // Refresh categories list
-        const updatedCategories = await api.get<Category[]>('/api/categories?type=expense');
-        setCategories(updatedCategories);
+        const updatedCategories = await api.get<any>('/api/categories?type=expense');
+        // Handle paginated response
+        const categoriesData = updatedCategories?.data || updatedCategories?.items || [];
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       }
 
       const expenseData = {

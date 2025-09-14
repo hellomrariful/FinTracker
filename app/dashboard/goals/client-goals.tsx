@@ -114,8 +114,8 @@ export function GoalsClient() {
 
   const fetchGoals = async () => {
     try {
-      const data = await api.get('/api/goals');
-      setGoals(data.goals || []);
+      const data = await api.get<{ goals: Goal[] }>('/api/goals');
+      setGoals(data?.goals || []);
     } catch (error) {
       toast.error('Failed to load goals');
       console.error(error);

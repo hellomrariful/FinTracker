@@ -9,7 +9,9 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import Link from 'next/link';
 
 type IncomeTransaction = {
   id: string;
@@ -60,11 +62,15 @@ export function IncomeForm({
   const [showNewSourceInput, setShowNewSourceInput] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSource, setSelectedSource] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Bank Transfer');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
 
   useEffect(() => {
     if (income) {
       setSelectedCategory(income.category);
       setSelectedSource(income.source);
+      setSelectedPaymentMethod(income.paymentMethod || 'Bank Transfer');
+      setSelectedEmployeeId(income.employeeId || '');
     }
   }, [income]);
 
@@ -106,16 +112,30 @@ export function IncomeForm({
       let categoryName = selectedCategory;
       if (selectedCategory === 'new' && newCategory.trim()) {
         // Create new category
-        const result = await api.post('/api/categories', {
+        const result = await api.post<any>('/api/categories', {
           name: newCategory.trim(),
           type: 'income'
         });
-        categoryName = result.data.name;
+        // Handle both possible response structures
+        categoryName = result?.data?.name || result?.name || newCategory.trim();
       }
 
       let sourceName = selectedSource;
       if (selectedSource === 'new' && newSource.trim()) {
         sourceName = newSource.trim();
+      }
+      
+      // Validate required fields
+      if (!sourceName) {
+        toast.error('Please select or create a source');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (!categoryName) {
+        toast.error('Please select or create a category');
+        setIsSubmitting(false);
+        return;
       }
 
       const incomeData = {
@@ -125,8 +145,8 @@ export function IncomeForm({
         platform: formData.get('platform') as string || undefined,
         amount: parseFloat(formData.get('amount') as string),
         date: formData.get('date') as string,
-        paymentMethod: formData.get('paymentMethod') as string,
-        employeeId: formData.get('employeeId') as string,
+        paymentMethod: selectedPaymentMethod,
+        employeeId: selectedEmployeeId || undefined,
         status: 'completed' as const,
       };
 
@@ -248,7 +268,7 @@ export function IncomeForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="paymentMethod">Payment Method</Label>
-          <Select name="paymentMethod" defaultValue={income?.paymentMethod}>
+          <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
             <SelectTrigger>
               <SelectValue placeholder="Select payment method" />
             </SelectTrigger>
@@ -263,17 +283,20 @@ export function IncomeForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="employeeId">Employee</Label>
-          <Select name="employeeId" defaultValue={income?.employeeId}>
+          <Label htmlFor="employeeId">Employee (Optional)</Label>
+          <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
             <SelectTrigger>
-              <SelectValue placeholder="Select employee" />
+              <SelectValue placeholder="Select employee (optional)" />
             </SelectTrigger>
             <SelectContent>
-              {employees.map((employee) => (
-                <SelectItem key={employee.id} value={employee.id}>
-                  {employee.name} - {employee.role}
-                </SelectItem>
-              ))}
+              <SelectItem value="">No Employee</SelectItem>
+              {employees && employees.length > 0 && 
+                employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.name} - {employee.role}
+                  </SelectItem>
+                ))
+              }
             </SelectContent>
           </Select>
         </div>
