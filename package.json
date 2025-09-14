@@ -17,9 +17,9 @@
     "validate:env": "node scripts/validate-env.js",
     "prebuild": "node scripts/validate-env.js",
     "postinstall": "echo '\n📋 Run npm run validate:env to check your environment configuration\n'",
-    "db:seed": "tsx scripts/seed.ts",
     "db:indexes": "tsx scripts/create-indexes.ts",
-    "db:health": "tsx scripts/db-health.ts"
+    "db:health": "tsx scripts/db-health.ts",
+    "db:migrate-categories": "tsx scripts/migrate-category-indexes.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

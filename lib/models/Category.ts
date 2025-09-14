@@ -79,7 +79,11 @@ const categorySchema = new Schema<ICategory>({
 
 // Indexes for better query performance
 categorySchema.index({ userId: 1, type: 1, isActive: 1 });
-categorySchema.index({ userId: 1, name: 1 }, { unique: true });
+// Unique by userId + name + type (case-insensitive via collation)
+categorySchema.index(
+  { userId: 1, name: 1, type: 1 },
+  { unique: true, collation: { locale: 'en', strength: 2 } }
+);
 categorySchema.index({ parentId: 1 });
 
 // Virtual for subcategories

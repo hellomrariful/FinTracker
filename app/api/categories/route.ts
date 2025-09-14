@@ -106,19 +106,24 @@ export const POST = withAuth(async (request, { auth }) => {
   
   await connectDB();
   
-  // Check if category with same name exists for user
+  // Normalize input
+  const name = body.name.trim();
+
+  // Check if category with same name and type exists for user (case-insensitive)
   const existing = await Category.findOne({
     userId: auth.user.userId,
-    name: body.name,
+    type: body.type,
+    name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
   });
   
   if (existing) {
-    throw new ConflictError(`Category '${body.name}' already exists`);
+    throw new ConflictError(`Category '${name}' already exists`);
   }
   
   // Create category
   const category = await Category.create({
     ...body,
+    name,
     userId: auth.user.userId,
   });
   

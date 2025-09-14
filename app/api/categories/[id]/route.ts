@@ -79,35 +79,41 @@ export const PATCH = withAuth(async (request, { auth, params }) => {
     throw new NotFoundError('Category', id);
   }
   
-  // If renaming, check for duplicates
-  if (body.name && body.name !== existing.name) {
+  // If renaming and/or changing type, check for duplicates (case-insensitive)
+  const newName = body.name ? body.name.trim() : existing.name;
+  const newType = body.type ?? existing.type;
+
+  if (newName.toLowerCase() !== existing.name.toLowerCase() || newType !== existing.type) {
     const duplicate = await Category.findOne({
       userId: auth.user.userId,
-      name: body.name,
+      type: newType,
+      name: { $regex: new RegExp(`^${newName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
       _id: { $ne: id },
     });
     
     if (duplicate) {
-      throw new ConflictError(`Category '${body.name}' already exists`);
+      throw new ConflictError(`Category '${newName}' already exists`);
     }
     
-    // Update all transactions with old category name
-    await Promise.all([
-      Income.updateMany(
-        { userId: auth.user.userId, category: existing.name },
-        { category: body.name }
-      ),
-      Expense.updateMany(
-        { userId: auth.user.userId, category: existing.name },
-        { category: body.name }
-      ),
-    ]);
+    // If name changed, update all transactions with old category name
+    if (newName !== existing.name) {
+      await Promise.all([
+        Income.updateMany(
+          { userId: auth.user.userId, category: existing.name },
+          { category: newName }
+        ),
+        Expense.updateMany(
+          { userId: auth.user.userId, category: existing.name },
+          { category: newName }
+        ),
+      ]);
+    }
   }
   
   // Update category
   const updated = await Category.findByIdAndUpdate(
     id,
-    body,
+    { ...body, ...(body.name ? { name: newName } : {}) },
     { new: true, runValidators: true }
   ).lean();
   
