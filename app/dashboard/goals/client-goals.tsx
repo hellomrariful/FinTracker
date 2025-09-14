@@ -40,6 +40,7 @@ import { GoalForm } from '@/components/dashboard/goal-form';
 import { ProgressUpdateDialog } from '@/components/dashboard/goal-progress-dialog';
 import { MilestoneDialog } from '@/components/dashboard/goal-milestone-dialog';
 import { toast } from 'sonner';
+import { api } from '@/lib/api/client';
 import { format, differenceInDays } from 'date-fns';
 
 interface Milestone {
@@ -113,9 +114,7 @@ export function GoalsClient() {
 
   const fetchGoals = async () => {
     try {
-      const response = await fetch('/api/goals');
-      if (!response.ok) throw new Error('Failed to fetch goals');
-      const data = await response.json();
+      const data = await api.get('/api/goals');
       setGoals(data.goals || []);
     } catch (error) {
       toast.error('Failed to load goals');
@@ -129,12 +128,7 @@ export function GoalsClient() {
     if (!confirm('Are you sure you want to delete this goal?')) return;
 
     try {
-      const response = await fetch(`/api/goals/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete goal');
-      
+      await api.delete(`/api/goals/${id}`);
       toast.success('Goal deleted successfully');
       fetchGoals();
     } catch (error) {
@@ -145,14 +139,7 @@ export function GoalsClient() {
 
   const handleStatusChange = async (goal: Goal, newStatus: string) => {
     try {
-      const response = await fetch(`/api/goals/${goal._id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      
-      if (!response.ok) throw new Error('Failed to update status');
-      
+      await api.patch(`/api/goals/${goal._id}`, { status: newStatus });
       toast.success(`Goal ${newStatus}`);
       fetchGoals();
     } catch (error) {

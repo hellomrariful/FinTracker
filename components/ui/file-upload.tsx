@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { api } from '@/lib/api/client';
 
 interface FileUploadProps {
   category?: string;
@@ -161,7 +162,7 @@ export function FileUpload({
         });
       }, 200);
 
-      const response = await fetch('/api/upload', {
+      const response = await api.fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
@@ -216,7 +217,7 @@ export function FileUpload({
 
   const removeFile = async (fileId: string) => {
     try {
-      const response = await fetch('/api/upload', {
+      const response = await api.fetch('/api/upload', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileId }),

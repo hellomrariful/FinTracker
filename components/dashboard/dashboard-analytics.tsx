@@ -48,6 +48,7 @@ import {
   Users,
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
+import { api } from '@/lib/api/client';
 
 interface DashboardAnalyticsProps {
   userId: string;
@@ -75,11 +76,11 @@ export function DashboardAnalytics({ userId }: DashboardAnalyticsProps) {
     try {
       // Fetch various analytics data
       const [expenses, income, budgets, goals, recurring] = await Promise.all([
-        fetch('/api/expenses').then(res => res.json()),
-        fetch('/api/income').then(res => res.json()),
-        fetch('/api/budgets').then(res => res.json()),
-        fetch('/api/goals').then(res => res.json()),
-        fetch('/api/recurring').then(res => res.json()),
+        api.get('/api/expenses'),
+        api.get('/api/income'),
+        api.get('/api/budgets'),
+        api.get('/api/goals'),
+        api.get('/api/recurring'),
       ]);
 
       // Process data for charts

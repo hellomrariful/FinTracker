@@ -52,6 +52,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "@/lib/api/client";
 type Asset = {
   id: string;
   _id?: string;
@@ -88,13 +89,7 @@ export function ClientAssets({
   const fetchAssets = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/assets');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch assets');
-      }
-      
-      const result = await response.json();
+      const result = await api.get<{ data: any[] }>('/api/assets');
       // Map _id to id for consistency
       const mappedAssets = result.data.map((asset: any) => ({
         ...asset,
@@ -159,26 +154,14 @@ export function ClientAssets({
 
       if (editingAsset) {
         // Update existing asset
-        const response = await fetch(`/api/assets/${editingAsset.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(assetData)
-        });
-        
-        if (!response.ok) throw new Error('Failed to update asset');
+        await api.put(`/api/assets/${editingAsset.id}`, assetData);
         
         toast.success("Asset updated successfully");
         setEditingAsset(null);
         setIsEditDialogOpen(false);
       } else {
         // Create new asset
-        const response = await fetch('/api/assets', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(assetData)
-        });
-        
-        if (!response.ok) throw new Error('Failed to create asset');
+        await api.post('/api/assets', assetData);
         
         toast.success("Asset added successfully");
         setIsAddDialogOpen(false);
@@ -196,11 +179,7 @@ export function ClientAssets({
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this asset?")) {
       try {
-        const response = await fetch(`/api/assets/${id}`, {
-          method: 'DELETE'
-        });
-        
-        if (!response.ok) throw new Error('Failed to delete asset');
+        await api.delete(`/api/assets/${id}`);
         
         toast.success("Asset deleted successfully");
         await fetchAssets();

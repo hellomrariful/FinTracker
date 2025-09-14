@@ -85,8 +85,14 @@ export async function verifyToken(
     const secret = getSecret(type);
     const { payload } = await jwtVerify(token, secret);
     
-    // Validate token type
-    if (payload.type !== type) {
+    // Validate token type (support legacy tokens without a `type` claim as ACCESS)
+    const payloadAny = payload as any;
+    if (payloadAny.type && payloadAny.type !== type) {
+      throw new AuthenticationError('Invalid token type');
+    }
+    
+    // For legacy tokens that do not include a `type` claim, assume ACCESS by default
+    if (!payloadAny.type && type !== TokenType.ACCESS) {
       throw new AuthenticationError('Invalid token type');
     }
     

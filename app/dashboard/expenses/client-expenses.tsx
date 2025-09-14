@@ -98,7 +98,17 @@ type Stats = {
   byCategory: Record<string, number>;
   highestCategory: [string, number];
   byEmployee: Record<string, number>;
-  topSpender?: Employee & { totalSpent: number };
+  topSpender?: EmployeeSpendingData;
+};
+
+type StatsData = {
+  total: number;
+};
+
+type EmployeeSpendingData = {
+  id: string;
+  name: string;
+  totalSpent: number;
 };
 
 type ClientExpensesProps = {
@@ -138,36 +148,36 @@ export function ClientExpenses({
 
       // Fetch all required data in parallel using authenticated API client
       const [expensesResponse, employeesResponse, categoriesResponse, statsResponse] = await Promise.all([
-        api.get('/api/expenses'),
-        api.get('/api/employees'),
-        api.get('/api/categories?type=expense'),
+        api.get<ExpenseTransaction[]>('/api/expenses'),
+        api.get<Employee[]>('/api/employees'),
+        api.get<Category[]>('/api/categories?type=expense'),
         Promise.all([
-          api.get('/api/expenses/statistics'),
-          api.get(`/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
-          api.get(`/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
-          api.get('/api/employees/spending?months=1')
+          api.get<StatsData>('/api/expenses/statistics'),
+          api.get<StatsData>(`/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
+          api.get<StatsData>(`/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
+          api.get<EmployeeSpendingData[]>('/api/employees/spending?months=1')
         ])
       ]);
 
       // Set expenses
-      setExpenses(expensesResponse.data);
+      setExpenses(expensesResponse);
       
       // Set employees
-      setEmployees(employeesResponse.data);
+      setEmployees(employeesResponse);
       
       // Set categories
-      setCategories(categoriesResponse.data);
+      setCategories(categoriesResponse);
 
       // Extract and process statistics
       const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] = statsResponse;
-      const topEmployee = employeeStats.data[0]; // First employee is the top spender due to sorting
+      const topEmployee = employeeStats[0]; // First employee is the top spender due to sorting
       
       const expenseGrowth = lastMonthStats.total > 0
         ? ((currentMonthStats.total - lastMonthStats.total) / lastMonthStats.total) * 100
         : 0;
 
       // Compute category stats from the expenses
-      const byCategory = expensesResponse.data.reduce((acc: Record<string, number>, exp: ExpenseTransaction) => {
+      const byCategory = expensesResponse.reduce((acc: Record<string, number>, exp: ExpenseTransaction) => {
         acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
         return acc;
       }, {});
@@ -183,7 +193,7 @@ export function ClientExpenses({
         expenseGrowth,
         byCategory,
         highestCategory,
-        byEmployee: employeeStats.data.reduce((acc: Record<string, number>, emp: any) => {
+        byEmployee: employeeStats.reduce((acc: Record<string, number>, emp: any) => {
           acc[emp.id] = emp.totalSpent;
           return acc;
         }, {}),
@@ -240,7 +250,7 @@ export function ClientExpenses({
       
       // Create new category if needed
       if (selectedCategory === "new" && newCategory.trim()) {
-        const newCat = await api.post('/api/categories', {
+        const newCat: { data: Category } = await api.post('/api/categories', {
           name: newCategory.trim(),
           type: 'expense'
         });
@@ -248,8 +258,8 @@ export function ClientExpenses({
         categoryName = newCat.data.name;
         
         // Refresh categories list
-        const updatedCategories = await api.get('/api/categories?type=expense');
-        setCategories(updatedCategories.data);
+        const updatedCategories = await api.get<Category[]>('/api/categories?type=expense');
+        setCategories(updatedCategories);
       }
 
       const expenseData = {

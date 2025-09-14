@@ -127,14 +127,14 @@ export function ClientIncome({
 
       // Fetch all required data in parallel using authenticated API client
       const [incomeResponse, employeesResponse, categoriesResponse, statsResponse] = await Promise.all([
-        api.get('/api/income'),
-        api.get('/api/employees'),
-        api.get('/api/categories?type=income'),
+        api.get<{ data: IncomeTransaction[] }>('/api/income'),
+        api.get<{ data: Employee[] }>('/api/employees'),
+        api.get<{ data: Category[] }>('/api/categories?type=income'),
         Promise.all([
-          api.get('/api/income/statistics'),
-          api.get(`/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
-          api.get(`/api/income/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
-          api.get('/api/employees/performance?months=1')
+          api.get<{ data: { statistics: any } }>('/api/income/statistics'),
+          api.get<{ data: { statistics: any } }>(`/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
+          api.get<{ data: { statistics: any } }>(`/api/income/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
+          api.get<{ data: any[] }>('/api/employees/performance?months=1')
         ])
       ]);
 

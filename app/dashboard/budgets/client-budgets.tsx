@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { BudgetForm } from '@/components/dashboard/budget-form';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { api } from '@/lib/api/client';
 
 interface Budget {
   _id: string;
@@ -74,9 +75,7 @@ export function BudgetsClient() {
 
   const fetchBudgets = async () => {
     try {
-      const response = await fetch('/api/budgets');
-      if (!response.ok) throw new Error('Failed to fetch budgets');
-      const data = await response.json();
+      const data = await api.get<{ data: Budget[] }>('/api/budgets');
       setBudgets(data.data || []);
     } catch (error) {
       toast.error('Failed to load budgets');
@@ -90,12 +89,7 @@ export function BudgetsClient() {
     if (!confirm('Are you sure you want to delete this budget?')) return;
 
     try {
-      const response = await fetch(`/api/budgets/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete budget');
-      
+      await api.delete(`/api/budgets/${id}`);
       toast.success('Budget deleted successfully');
       fetchBudgets();
     } catch (error) {
@@ -106,18 +100,11 @@ export function BudgetsClient() {
 
   const handleClone = async (id: string) => {
     try {
-      const response = await fetch(`/api/budgets/${id}/clone`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Copy of Budget',
-          periodStart: new Date().toISOString(),
-          periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        }),
+      await api.post(`/api/budgets/${id}/clone`, {
+        name: 'Copy of Budget',
+        periodStart: new Date().toISOString(),
+        periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
-      
-      if (!response.ok) throw new Error('Failed to clone budget');
-      
       toast.success('Budget cloned successfully');
       fetchBudgets();
     } catch (error) {
@@ -128,12 +115,7 @@ export function BudgetsClient() {
 
   const handleRollover = async (id: string) => {
     try {
-      const response = await fetch(`/api/budgets/${id}/rollover`, {
-        method: 'POST',
-      });
-      
-      if (!response.ok) throw new Error('Failed to rollover budget');
-      
+      await api.post(`/api/budgets/${id}/rollover`);
       toast.success('Budget rolled over successfully');
       fetchBudgets();
     } catch (error) {
@@ -144,14 +126,7 @@ export function BudgetsClient() {
 
   const toggleAlerts = async (budget: Budget) => {
     try {
-      const response = await fetch(`/api/budgets/${budget._id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alertsEnabled: !budget.alertsEnabled }),
-      });
-      
-      if (!response.ok) throw new Error('Failed to update alerts');
-      
+      await api.patch(`/api/budgets/${budget._id}`, { alertsEnabled: !budget.alertsEnabled });
       toast.success(`Alerts ${!budget.alertsEnabled ? 'enabled' : 'disabled'}`);
       fetchBudgets();
     } catch (error) {

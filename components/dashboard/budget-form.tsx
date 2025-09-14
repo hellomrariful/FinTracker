@@ -110,7 +110,7 @@ export function BudgetForm({ budget, onClose, onSuccess }: BudgetFormProps) {
 
   const fetchCategories = async () => {
     try {
-      const data = await api.get('/api/categories');
+      const data = await api.get<any[]>('/api/categories');
       setCategories(data.map((cat: any) => cat.name));
     } catch (error) {
       console.error('Failed to fetch categories:', error);
