@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { FileUpload } from '@/components/ui/file-upload';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+} from "@/components/ui/select";
+import { FileUpload } from "@/components/ui/file-upload";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface ExpenseFormProps {
   onSubmit: (data: any) => Promise<void>;
@@ -22,49 +22,56 @@ interface ExpenseFormProps {
   onCancel?: () => void;
 }
 
-export function ExpenseForm({ 
-  onSubmit, 
-  expense, 
+export function ExpenseForm({
+  onSubmit,
+  expense,
   categories = [],
-  onCancel 
+  onCancel,
 }: ExpenseFormProps) {
   const [loading, setLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<any[]>([]);
   const [showNewCategory, setShowNewCategory] = useState(false);
-  const [newCategory, setNewCategory] = useState('');
+  const [newCategory, setNewCategory] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    
+
     try {
       const data = {
-        name: formData.get('name') as string,
-        amount: parseFloat(formData.get('amount') as string),
-        category: showNewCategory ? newCategory : formData.get('category') as string,
-        description: formData.get('description') as string,
-        date: formData.get('date') as string,
-        paymentMethod: formData.get('paymentMethod') as string,
-        vendor: formData.get('vendor') as string,
-        tags: (formData.get('tags') as string)?.split(',').map(t => t.trim()).filter(Boolean),
-        attachments: attachedFiles.map(f => f.id),
-        isRecurring: formData.get('isRecurring') === 'on',
-        recurringFrequency: formData.get('recurringFrequency') as string,
+        name: formData.get("name") as string,
+        amount: parseFloat(formData.get("amount") as string),
+        category: showNewCategory
+          ? newCategory
+          : (formData.get("category") as string),
+        description: formData.get("description") as string,
+        date: formData.get("date") as string,
+        paymentMethod: formData.get("paymentMethod") as string,
+        vendor: formData.get("vendor") as string,
+        tags: (formData.get("tags") as string)
+          ?.split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        attachments: attachedFiles.map((f) => f.id),
+        isRecurring: formData.get("isRecurring") === "on",
+        recurringFrequency: formData.get("recurringFrequency") as string,
       };
 
       await onSubmit(data);
-      
+
       // Reset form
       setAttachedFiles([]);
-      setNewCategory('');
+      setNewCategory("");
       setShowNewCategory(false);
-      
-      toast.success(expense ? 'Expense updated successfully' : 'Expense added successfully');
+
+      toast.success(
+        expense ? "Expense updated successfully" : "Expense added successfully"
+      );
     } catch (error) {
-      console.error('Form submission error:', error);
-      toast.error('Failed to save expense');
+      console.error("Form submission error:", error);
+      toast.error("Failed to save expense");
     } finally {
       setLoading(false);
     }
@@ -83,7 +90,7 @@ export function ExpenseForm({
             required
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="amount">Amount*</Label>
           <Input
@@ -103,11 +110,11 @@ export function ExpenseForm({
         <div className="space-y-2">
           <Label htmlFor="category">Category*</Label>
           {!showNewCategory ? (
-            <Select 
-              name="category" 
+            <Select
+              name="category"
               defaultValue={expense?.category}
               onValueChange={(value) => {
-                if (value === 'new-category') {
+                if (value === "new-category") {
                   setShowNewCategory(true);
                 }
               }}
@@ -116,12 +123,17 @@ export function ExpenseForm({
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.name}>
+                {categories.map((cat, index) => (
+                  <SelectItem
+                    key={cat.id || `category-${index}`}
+                    value={cat.name}
+                  >
                     {cat.name}
                   </SelectItem>
                 ))}
-                <SelectItem key="new-category" value="new-category">+ Add new category</SelectItem>
+                <SelectItem key="new-category" value="new-category">
+                  + Add new category
+                </SelectItem>
               </SelectContent>
             </Select>
           ) : (
@@ -137,7 +149,7 @@ export function ExpenseForm({
                 variant="outline"
                 onClick={() => {
                   setShowNewCategory(false);
-                  setNewCategory('');
+                  setNewCategory("");
                 }}
               >
                 Cancel
@@ -152,7 +164,9 @@ export function ExpenseForm({
             id="date"
             name="date"
             type="date"
-            defaultValue={expense?.date || new Date().toISOString().split('T')[0]}
+            defaultValue={
+              expense?.date || new Date().toISOString().split("T")[0]
+            }
             required
           />
         </div>
@@ -171,7 +185,10 @@ export function ExpenseForm({
 
         <div className="space-y-2">
           <Label htmlFor="paymentMethod">Payment Method*</Label>
-          <Select name="paymentMethod" defaultValue={expense?.paymentMethod || 'credit_card'}>
+          <Select
+            name="paymentMethod"
+            defaultValue={expense?.paymentMethod || "credit_card"}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select payment method" />
             </SelectTrigger>
@@ -203,7 +220,7 @@ export function ExpenseForm({
         <Input
           id="tags"
           name="tags"
-          defaultValue={expense?.tags?.join(', ')}
+          defaultValue={expense?.tags?.join(", ")}
           placeholder="tax-deductible, business, travel (comma separated)"
         />
       </div>
@@ -220,8 +237,11 @@ export function ExpenseForm({
           />
           <Label htmlFor="isRecurring">This is a recurring expense</Label>
         </div>
-        
-        <Select name="recurringFrequency" defaultValue={expense?.recurringFrequency || 'monthly'}>
+
+        <Select
+          name="recurringFrequency"
+          defaultValue={expense?.recurringFrequency || "monthly"}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select frequency" />
           </SelectTrigger>
@@ -244,13 +264,18 @@ export function ExpenseForm({
           entityType="expense"
           entityId={expense?.id}
           maxFiles={5}
-          acceptedTypes={['image/jpeg', 'image/png', 'image/webp', 'application/pdf']}
+          acceptedTypes={[
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "application/pdf",
+          ]}
           onUploadComplete={(files) => {
             setAttachedFiles(files);
             toast.success(`${files.length} file(s) attached`);
           }}
           onFileRemove={(fileId) => {
-            setAttachedFiles(prev => prev.filter(f => f.id !== fileId));
+            setAttachedFiles((prev) => prev.filter((f) => f.id !== fileId));
           }}
           existingFiles={attachedFiles}
         />
@@ -265,7 +290,7 @@ export function ExpenseForm({
         )}
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          {expense ? 'Update Expense' : 'Add Expense'}
+          {expense ? "Update Expense" : "Add Expense"}
         </Button>
       </div>
     </form>

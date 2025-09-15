@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { useAuth } from "@/lib/hooks/use-auth";
 import {
@@ -52,14 +52,35 @@ import {
   Users,
   Bell,
   Palette,
+  Loader2,
 } from "lucide-react";
-import { dataStore, type Employee, type Category } from "@/lib/data-store";
 import { toast } from "sonner";
+import { api } from "@/lib/api/client";
+
+type Employee = {
+  id: string;
+  name: string;
+  email?: string;
+  role?: string;
+  department?: string;
+  hireDate?: string;
+  salary?: number;
+  performance?: number;
+  avatar?: string;
+  status?: string;
+};
+
+type Category = {
+  id: string;
+  name: string;
+  type: "income" | "expense";
+};
 
 export default function SettingsPage() {
   const { user, profile } = useAuth();
-  const [employees, setEmployees] = useState(dataStore.getEmployees());
-  const [categories, setCategories] = useState(dataStore.getCategories());
+  const [isLoading, setIsLoading] = useState(true);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -70,35 +91,96 @@ export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
 
-  const handleEmployeeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Fetch data from API
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Fetch employees and categories in parallel
+      const [employeesResponse, categoriesResponse] = await Promise.all([
+        api.get<any>("/api/employees").catch((err) => {
+          console.error("Failed to fetch employees:", err);
+          return { data: { data: [] } };
+        }),
+        api.get<any>("/api/categories").catch((err) => {
+          console.error("Failed to fetch categories:", err);
+          return { data: { data: [] } };
+        }),
+      ]);
+
+      // Set employees
+      const employeesData =
+        employeesResponse?.data?.data || employeesResponse?.data || [];
+      const mappedEmployees = Array.isArray(employeesData)
+        ? employeesData.map((emp: any) => ({
+            ...emp,
+            id: emp._id || emp.id || `emp-${Date.now()}-${Math.random()}`,
+          }))
+        : [];
+      setEmployees(mappedEmployees);
+
+      // Set categories
+      const categoriesData =
+        categoriesResponse?.data?.data || categoriesResponse?.data || [];
+      const mappedCategories = Array.isArray(categoriesData)
+        ? categoriesData.map((cat: any) => ({
+            ...cat,
+            id: cat._id || cat.id || `cat-${Date.now()}-${Math.random()}`,
+          }))
+        : [];
+      setCategories(mappedCategories);
+    } catch (error) {
+      console.error("Error fetching settings data:", error);
+      toast.error("Failed to load settings data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleEmployeeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
     const employeeData = {
       name: formData.get("name") as string,
-      role: formData.get("role") as string,
-      department: formData.get("department") as string,
-      hireDate: formData.get("hireDate") as string,
-      salary: parseFloat(formData.get("salary") as string) || 0,
-      performance: parseFloat(formData.get("performance") as string) || 0,
+      email: formData.get("email") as string,
+      role: (formData.get("role") as string) || undefined,
+      department: (formData.get("department") as string) || undefined,
+      hireDate: (formData.get("hireDate") as string) || undefined,
+      salary: parseFloat(formData.get("salary") as string) || undefined,
+      performance:
+        parseFloat(formData.get("performance") as string) || undefined,
       avatar: (formData.get("avatar") as string) || undefined,
     };
 
-    if (editingEmployee) {
-      dataStore.updateEmployee(editingEmployee.id, employeeData);
-      toast.success("Employee updated successfully");
-      setEditingEmployee(null);
-    } else {
-      dataStore.addEmployee(employeeData);
-      toast.success("Employee added successfully");
-      setIsAddEmployeeDialogOpen(false);
-    }
+    try {
+      if (editingEmployee) {
+        await api.patch(`/api/employees/${editingEmployee.id}`, employeeData);
+        toast.success("Employee updated successfully");
+        setEditingEmployee(null);
+      } else {
+        await api.post("/api/employees", employeeData);
+        toast.success("Employee added successfully");
+        setIsAddEmployeeDialogOpen(false);
+      }
 
-    setEmployees(dataStore.getEmployees());
-    (e.target as HTMLFormElement).reset();
+      // Refresh data
+      await fetchData();
+      (e.target as HTMLFormElement).reset();
+    } catch (error) {
+      console.error("Error submitting employee:", error);
+      toast.error(
+        editingEmployee ? "Failed to update employee" : "Failed to add employee"
+      );
+    }
   };
 
-  const handleCategorySubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCategorySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
@@ -107,33 +189,51 @@ export default function SettingsPage() {
       type: formData.get("type") as "income" | "expense",
     };
 
-    if (editingCategory) {
-      dataStore.updateCategory(editingCategory.id, categoryData);
-      toast.success("Category updated successfully");
-      setEditingCategory(null);
-    } else {
-      dataStore.addCategory(categoryData);
-      toast.success("Category added successfully");
-      setIsAddCategoryDialogOpen(false);
-    }
+    try {
+      if (editingCategory) {
+        await api.patch(`/api/categories/${editingCategory.id}`, categoryData);
+        toast.success("Category updated successfully");
+        setEditingCategory(null);
+      } else {
+        await api.post("/api/categories", categoryData);
+        toast.success("Category added successfully");
+        setIsAddCategoryDialogOpen(false);
+      }
 
-    setCategories(dataStore.getCategories());
-    (e.target as HTMLFormElement).reset();
+      // Refresh data
+      await fetchData();
+      (e.target as HTMLFormElement).reset();
+    } catch (error) {
+      console.error("Error submitting category:", error);
+      toast.error(
+        editingCategory ? "Failed to update category" : "Failed to add category"
+      );
+    }
   };
 
-  const handleDeleteEmployee = (id: string) => {
+  const handleDeleteEmployee = async (id: string) => {
     if (confirm("Are you sure you want to delete this employee?")) {
-      dataStore.deleteEmployee(id);
-      setEmployees(dataStore.getEmployees());
-      toast.success("Employee deleted successfully");
+      try {
+        await api.delete(`/api/employees/${id}`);
+        toast.success("Employee deleted successfully");
+        await fetchData(); // Refresh data
+      } catch (error) {
+        console.error("Error deleting employee:", error);
+        toast.error("Failed to delete employee");
+      }
     }
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
     if (confirm("Are you sure you want to delete this category?")) {
-      dataStore.deleteCategory(id);
-      setCategories(dataStore.getCategories());
-      toast.success("Category deleted successfully");
+      try {
+        await api.delete(`/api/categories/${id}`);
+        toast.success("Category deleted successfully");
+        await fetchData(); // Refresh data
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        toast.error("Failed to delete category");
+      }
     }
   };
 
@@ -151,13 +251,24 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          defaultValue={employee?.email}
+          placeholder="john.doe@company.com"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="role">Role</Label>
         <Input
           id="role"
           name="role"
           defaultValue={employee?.role}
           placeholder="Software Engineer"
-          required
         />
       </div>
 
@@ -168,7 +279,6 @@ export default function SettingsPage() {
           name="department"
           defaultValue={employee?.department}
           placeholder="Engineering"
-          required
         />
       </div>
 
@@ -182,7 +292,6 @@ export default function SettingsPage() {
             defaultValue={
               employee?.hireDate || new Date().toISOString().split("T")[0]
             }
-            required
           />
         </div>
         <div className="space-y-2">
@@ -195,7 +304,6 @@ export default function SettingsPage() {
             step="1000"
             defaultValue={employee?.salary || 0}
             placeholder="50000"
-            required
           />
         </div>
       </div>
@@ -210,7 +318,6 @@ export default function SettingsPage() {
           max="100"
           defaultValue={employee?.performance || 0}
           placeholder="85"
-          required
         />
       </div>
 
@@ -267,6 +374,20 @@ export default function SettingsPage() {
     </form>
   );
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading settings...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -306,8 +427,20 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face" />
-                    <AvatarFallback>JD</AvatarFallback>
+                    <AvatarImage
+                      src={
+                        profile?.avatar ||
+                        user?.avatar ||
+                        "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face"
+                      }
+                    />
+                    <AvatarFallback>
+                      {(profile?.name || user?.name || "Demo User")
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
                     <Button variant="outline">Change Avatar</Button>
@@ -320,11 +453,25 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" defaultValue="John" />
+                    <Input
+                      id="firstName"
+                      defaultValue={
+                        profile?.name?.split(" ")[0] ||
+                        user?.name?.split(" ")[0] ||
+                        "Demo"
+                      }
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" defaultValue="Doe" />
+                    <Input
+                      id="lastName"
+                      defaultValue={
+                        profile?.name?.split(" ").slice(1).join(" ") ||
+                        user?.name?.split(" ").slice(1).join(" ") ||
+                        "User"
+                      }
+                    />
                   </div>
                 </div>
 
@@ -333,7 +480,9 @@ export default function SettingsPage() {
                   <Input
                     id="email"
                     type="email"
-                    defaultValue={profile?.email || user?.email || ""}
+                    defaultValue={
+                      profile?.email || user?.email || "demo@fintracker.io"
+                    }
                   />
                 </div>
 
@@ -342,7 +491,7 @@ export default function SettingsPage() {
                   <Input
                     id="phone"
                     type="tel"
-                    defaultValue="+1 (555) 123-4567"
+                    defaultValue={"+1 (555) 123-4567"}
                   />
                 </div>
 
@@ -368,7 +517,7 @@ export default function SettingsPage() {
                   <Label htmlFor="businessName">Business Name</Label>
                   <Input
                     id="businessName"
-                    defaultValue="Fintracker Demo Company"
+                    defaultValue={"Fintracker Demo Company"}
                   />
                 </div>
 
@@ -461,6 +610,7 @@ export default function SettingsPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Employee</TableHead>
+                        <TableHead>Email</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Department</TableHead>
                         <TableHead>Salary</TableHead>
@@ -486,10 +636,13 @@ export default function SettingsPage() {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell>{employee.role}</TableCell>
-                          <TableCell>{employee.department}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {employee.email || "N/A"}
+                          </TableCell>
+                          <TableCell>{employee.role || "N/A"}</TableCell>
+                          <TableCell>{employee.department || "N/A"}</TableCell>
                           <TableCell>
-                            ${employee.salary.toLocaleString()}
+                            ${(employee.salary || 0).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">

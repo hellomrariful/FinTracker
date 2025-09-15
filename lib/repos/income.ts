@@ -47,7 +47,7 @@ export const CreateIncomeSchema = z.object({
   source: z.string().min(1).max(200),
   category: z.string().min(1),
   platform: z.string().optional(),
-  amount: z.number().positive(),
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
   date: z.coerce.date(),
   paymentMethod: z.enum([
     "Bank Transfer",
@@ -152,9 +152,19 @@ export class IncomeRepository {
 
     // Execute query
     const skip = (filters.page - 1) * filters.limit;
-    
-    console.log("[IncomeRepo] Final query before execution:", JSON.stringify(query));
-    console.log("[IncomeRepo] Sort:", sort, "Skip:", skip, "Limit:", filters.limit);
+
+    console.log(
+      "[IncomeRepo] Final query before execution:",
+      JSON.stringify(query)
+    );
+    console.log(
+      "[IncomeRepo] Sort:",
+      sort,
+      "Skip:",
+      skip,
+      "Limit:",
+      filters.limit
+    );
 
     const [incomes, total] = await Promise.all([
       Income.find(query)
@@ -165,8 +175,13 @@ export class IncomeRepository {
         .lean(),
       Income.countDocuments(query),
     ]);
-    
-    console.log("[IncomeRepo] Query results - Found:", incomes.length, "Total:", total);
+
+    console.log(
+      "[IncomeRepo] Query results - Found:",
+      incomes.length,
+      "Total:",
+      total
+    );
 
     // Get aggregates
     const aggregates = await Income.aggregate([

@@ -1,4 +1,5 @@
 {
   "kiroAgent.configureMCP": "Disabled",
-  "liveServer.settings.multiRootWorkspaceName": "FinTracker"
+  "liveServer.settings.multiRootWorkspaceName": "FinTracker",
+  "typescript.autoClosingTags": false
 }

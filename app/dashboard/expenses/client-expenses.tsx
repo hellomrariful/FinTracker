@@ -71,7 +71,9 @@ type ExpenseTransaction = {
   amount: number;
   date: string;
   paymentMethod: string;
-  employeeId?: string;
+  employeeId?:
+    | string
+    | { _id: string; name: string; email: string; avatar?: string };
   status: string;
   reimbursable?: boolean;
   reimbursementStatus?: "pending" | "approved" | "rejected" | "paid";
@@ -162,31 +164,23 @@ export function ClientExpenses({
         categoriesResponse,
         statsResponse,
       ] = await Promise.all([
-        api
-          .get<any>("/api/expenses")
-          .catch((err) => {
-            console.error("Failed to fetch expenses:", err);
-            return { data: { expenses: [] } };
-          }),
-        api
-          .get<any>("/api/employees")
-          .catch((err) => {
-            console.error("Failed to fetch employees:", err);
-            return { data: { data: [] } };
-          }),
+        api.get<any>("/api/expenses").catch((err) => {
+          console.error("Failed to fetch expenses:", err);
+          return { data: { expenses: [] } };
+        }),
+        api.get<any>("/api/employees").catch((err) => {
+          console.error("Failed to fetch employees:", err);
+          return { data: { data: [] } };
+        }),
         api.get<any>("/api/categories?type=expense").catch((err) => {
           console.error("Failed to fetch categories:", err);
           return { data: { data: [] } };
         }),
         Promise.all([
-          api
-            .get<any>(
-              "/api/expenses/statistics"
-            )
-            .catch((err) => {
-              console.error("Failed to fetch lifetime expense stats:", err);
-              return { data: { statistics: { totalExpenses: 0 } } };
-            }),
+          api.get<any>("/api/expenses/statistics").catch((err) => {
+            console.error("Failed to fetch lifetime expense stats:", err);
+            return { data: { statistics: { totalExpenses: 0 } } };
+          }),
           api
             .get<any>(
               `/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`
@@ -206,39 +200,41 @@ export function ClientExpenses({
               console.error("Failed to fetch last month expense stats:", err);
               return { data: { statistics: { totalExpenses: 0 } } };
             }),
-          api
-            .get<any>(
-              "/api/employees/spending?months=1"
-            )
-            .catch((err) => {
-              console.error("Failed to fetch employee spending:", err);
-              return { data: [] };
-            }),
+          api.get<any>("/api/employees/spending?months=1").catch((err) => {
+            console.error("Failed to fetch employee spending:", err);
+            return { data: [] };
+          }),
         ]),
       ]);
 
       // Set expenses - extract from data.expenses property
       // API returns { success: true, data: { expenses: [...] } }
-      const expensesData = expensesResponse?.data?.expenses || expensesResponse?.expenses || [];
+      const expensesData =
+        expensesResponse?.data?.expenses || expensesResponse?.expenses || [];
       console.log("Expenses API Response:", expensesResponse);
       console.log("Extracted expenses data:", expensesData);
       // Map _id to id for consistency and ensure unique keys
-      const mappedExpenses = Array.isArray(expensesData) 
+      const mappedExpenses = Array.isArray(expensesData)
         ? expensesData.map((expense: any) => ({
             ...expense,
-            id: expense._id || expense.id || `expense-${Date.now()}-${Math.random()}`
+            id:
+              expense._id ||
+              expense.id ||
+              `expense-${Date.now()}-${Math.random()}`,
           }))
         : [];
       setExpenses(mappedExpenses);
 
       // Set employees
       // API might return { success: true, data: { data: [...] } } or { success: true, data: [...] }
-      const employeesData = employeesResponse?.data?.data || employeesResponse?.data || [];
+      const employeesData =
+        employeesResponse?.data?.data || employeesResponse?.data || [];
       setEmployees(Array.isArray(employeesData) ? employeesData : []);
 
       // Set categories - extract from data property
       // API returns { success: true, data: [...] }
-      const categoriesData = categoriesResponse?.data?.data || categoriesResponse?.data || [];
+      const categoriesData =
+        categoriesResponse?.data?.data || categoriesResponse?.data || [];
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
 
       // Extract and process statistics with proper error handling
@@ -465,12 +461,17 @@ export function ClientExpenses({
                 .filter(
                   (category) => category.name && category.name.trim() !== ""
                 )
-                .map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
+                .map((category, index) => (
+                  <SelectItem
+                    key={category.id || `category-${index}`}
+                    value={category.name}
+                  >
                     {category.name}
                   </SelectItem>
                 ))}
-              <SelectItem key="new-category" value="new-category">+ Add new category</SelectItem>
+              <SelectItem key="new-category" value="new-category">
+                + Add new category
+              </SelectItem>
             </SelectContent>
           </Select>
           {showNewCategoryInput && (
@@ -527,7 +528,15 @@ export function ClientExpenses({
 
       <div className="space-y-2">
         <Label htmlFor="employeeId">Employee</Label>
-        <Select name="employeeId" defaultValue={expense?.employeeId}>
+        <Select
+          name="employeeId"
+          defaultValue={
+            typeof expense?.employeeId === "object" &&
+            expense?.employeeId !== null
+              ? expense.employeeId._id
+              : expense?.employeeId
+          }
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select employee" />
           </SelectTrigger>
@@ -714,9 +723,16 @@ export function ClientExpenses({
                 </TableHeader>
                 <TableBody>
                   {filteredExpenses.map((expense) => {
-                    const employee = employees.find(
-                      (e) => e.id === expense.employeeId
-                    );
+                    // Handle both populated and non-populated employee data
+                    const employee =
+                      typeof expense.employeeId === "object" &&
+                      expense.employeeId !== null
+                        ? {
+                            id: expense.employeeId._id,
+                            name: expense.employeeId.name,
+                            avatar: expense.employeeId.avatar,
+                          } // Use populated employee data directly
+                        : employees.find((e) => e.id === expense.employeeId); // Find by ID if not populated
                     return (
                       <TableRow key={expense.id}>
                         <TableCell className="font-medium">

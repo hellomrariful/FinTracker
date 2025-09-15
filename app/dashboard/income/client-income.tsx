@@ -66,7 +66,9 @@ type IncomeTransaction = {
   amount: number;
   date: string;
   paymentMethod: string;
-  employeeId?: string;
+  employeeId?:
+    | string
+    | { _id: string; name: string; email: string; avatar?: string };
   status: string;
 };
 
@@ -146,29 +148,23 @@ export function ClientIncome({
         categoriesResponse,
         statsResponse,
       ] = await Promise.all([
-        api
-          .get<any>("/api/income")
-          .catch((err) => {
-            console.error("Failed to fetch income:", err);
-            return { data: { incomes: [] } };
-          }),
-        api
-          .get<any>("/api/employees")
-          .catch((err) => {
-            console.error("Failed to fetch employees:", err);
-            return { data: { data: [] } };
-          }),
+        api.get<any>("/api/income").catch((err) => {
+          console.error("Failed to fetch income:", err);
+          return { data: { incomes: [] } };
+        }),
+        api.get<any>("/api/employees").catch((err) => {
+          console.error("Failed to fetch employees:", err);
+          return { data: { data: [] } };
+        }),
         api.get<any>("/api/categories?type=income").catch((err) => {
           console.error("Failed to fetch categories:", err);
           return { data: { data: [] } };
         }),
         Promise.all([
-          api
-            .get<any>("/api/income/statistics")
-            .catch((err) => {
-              console.error("Failed to fetch lifetime stats:", err);
-              return { data: { statistics: { totalIncome: 0 } } };
-            }),
+          api.get<any>("/api/income/statistics").catch((err) => {
+            console.error("Failed to fetch lifetime stats:", err);
+            return { data: { statistics: { totalIncome: 0 } } };
+          }),
           api
             .get<any>(
               `/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`
@@ -185,37 +181,41 @@ export function ClientIncome({
               console.error("Failed to fetch last month stats:", err);
               return { data: { statistics: { totalIncome: 0 } } };
             }),
-          api
-            .get<any>("/api/employees/performance?months=1")
-            .catch((err) => {
-              console.error("Failed to fetch employee performance:", err);
-              return { data: [] };
-            }),
+          api.get<any>("/api/employees/performance?months=1").catch((err) => {
+            console.error("Failed to fetch employee performance:", err);
+            return { data: [] };
+          }),
         ]),
       ]);
 
       // Set income transactions - ensure it's always an array
       // API returns { success: true, data: { incomes: [...] } }
-      const incomeData = incomeResponse?.data?.incomes || incomeResponse?.incomes || [];
+      const incomeData =
+        incomeResponse?.data?.incomes || incomeResponse?.incomes || [];
       console.log("Income API Response:", incomeResponse);
       console.log("Extracted income data:", incomeData);
       // Map _id to id for consistency and ensure unique keys
-      const mappedIncome = Array.isArray(incomeData) 
+      const mappedIncome = Array.isArray(incomeData)
         ? incomeData.map((income: any) => ({
             ...income,
-            id: income._id || income.id || `income-${Date.now()}-${Math.random()}`
+            id:
+              income._id ||
+              income.id ||
+              `income-${Date.now()}-${Math.random()}`,
           }))
         : [];
       setIncomeTransactions(mappedIncome);
 
       // Set employees
       // API might return { success: true, data: { data: [...] } } or { success: true, data: [...] }
-      const employeesData = employeesResponse?.data?.data || employeesResponse?.data || [];
+      const employeesData =
+        employeesResponse?.data?.data || employeesResponse?.data || [];
       setEmployees(Array.isArray(employeesData) ? employeesData : []);
 
       // Set categories - extract from data property
       // API returns { success: true, data: [...] }
-      const categoriesData = categoriesResponse?.data?.data || categoriesResponse?.data || [];
+      const categoriesData =
+        categoriesResponse?.data?.data || categoriesResponse?.data || [];
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
 
       // Extract and process statistics with proper error handling
@@ -510,7 +510,6 @@ export function ClientIncome({
               </div>
             </div>
 
-
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -554,9 +553,16 @@ export function ClientIncome({
                     </TableRow>
                   ) : (
                     filteredIncomeTransactions.map((income) => {
-                      const employee = employees.find(
-                        (e) => e.id === income.employeeId
-                      );
+                      // Handle both populated and non-populated employee data
+                      const employee =
+                        typeof income.employeeId === "object" &&
+                        income.employeeId !== null
+                          ? {
+                              id: income.employeeId._id,
+                              name: income.employeeId.name,
+                              avatar: income.employeeId.avatar,
+                            } // Use populated employee data directly
+                          : employees.find((e) => e.id === income.employeeId); // Find by ID if not populated
                       return (
                         <TableRow key={income.id}>
                           <TableCell>
