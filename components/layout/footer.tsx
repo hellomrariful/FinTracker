@@ -1,48 +1,48 @@
-import Link from 'next/link';
-import { BarChart3, Github, Twitter, Linkedin } from 'lucide-react';
+import Link from "next/link";
+import { BarChart3, Github, Twitter, Linkedin, Youtube } from "lucide-react";
 
 const navigation = {
   product: [
-    { name: 'Features', href: '#features' },
-    { name: 'Pricing', href: '/pricing' },
-    { name: 'Security', href: '/security' },
-    { name: 'Roadmap', href: '/roadmap' },
+    { name: "Features", href: "#features" },
+    { name: "Pricing", href: "/pricing" },
+    { name: "Security", href: "/security" },
+    { name: "Roadmap", href: "/roadmap" },
   ],
   company: [
-    { name: 'About', href: '/about' },
-    { name: 'Blog', href: '/blog' },
-    { name: 'Careers', href: '/careers' },
-    { name: 'Contact', href: '/contact' },
+    { name: "About", href: "/about" },
+    { name: "Blog", href: "/blog" },
+    { name: "Careers", href: "/careers" },
+    { name: "Contact", href: "/contact" },
   ],
   resources: [
-    { name: 'Help Center', href: '/help' },
-    { name: 'API Docs', href: '/docs' },
-    { name: 'Guides', href: '/guides' },
-    { name: 'Status', href: '/status' },
+    { name: "Help Center", href: "/help" },
+    { name: "API Docs", href: "/docs" },
+    { name: "Guides", href: "/guides" },
+    { name: "Status", href: "/status" },
   ],
   legal: [
-    { name: 'Privacy', href: '/privacy' },
-    { name: 'Terms', href: '/terms' },
-    { name: 'Cookie Policy', href: '/cookies' },
-    { name: 'Licenses', href: '/licenses' },
+    { name: "Privacy", href: "/privacy" },
+    { name: "Terms", href: "/terms" },
+    { name: "Cookie Policy", href: "/cookies" },
+    { name: "Licenses", href: "/licenses" },
   ],
 };
 
 const social = [
   {
-    name: 'Twitter',
-    href: 'https://x.com/hellomrariful',
+    name: "LinkedIn",
+    href: "https://www.linkedin.com/company/fintrackeriox",
+    icon: Linkedin,
+  },
+  {
+    name: "Twitter",
+    href: "https://x.com/hellomrariful",
     icon: Twitter,
   },
   {
-    name: 'GitHub',
-    href: 'https://github.com/hellomrariful',
-    icon: Github,
-  },
-  {
-    name: 'LinkedIn',
-    href: 'https://www.linkedin.com/in/hellomrariful/',
-    icon: Linkedin,
+    name: "YouTube",
+    href: "https://www.youtube.com/@FinTracker-io",
+    icon: Youtube,
   },
 ];
 
@@ -62,14 +62,14 @@ export function Footer() {
               <span className="text-xl font-bold">Fintracker</span>
             </Link>
             <p className="text-sm leading-6 text-muted-foreground">
-              Empowering digital businesses with intelligent financial management. 
-              Track, analyze, and optimize your finances with ease.
+              Empowering digital businesses with intelligent financial
+              management. Track, analyze, and optimize your finances with ease.
             </p>
             <div className="flex space-x-6">
               {social.map((item) => (
-                <a 
-                  key={item.name} 
-                  href={item.href} 
+                <a
+                  key={item.name}
+                  href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-primary transition-colors"
@@ -83,11 +83,16 @@ export function Footer() {
           <div className="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-sm font-semibold leading-6 text-foreground">Product</h3>
+                <h3 className="text-sm font-semibold leading-6 text-foreground">
+                  Product
+                </h3>
                 <ul role="list" className="mt-6 space-y-4">
                   {navigation.product.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className="text-sm leading-6 text-muted-foreground hover:text-primary transition-colors">
+                      <Link
+                        href={item.href}
+                        className="text-sm leading-6 text-muted-foreground hover:text-primary transition-colors"
+                      >
                         {item.name}
                       </Link>
                     </li>
@@ -95,11 +100,16 @@ export function Footer() {
                 </ul>
               </div>
               <div className="mt-10 md:mt-0">
-                <h3 className="text-sm font-semibold leading-6 text-foreground">Company</h3>
+                <h3 className="text-sm font-semibold leading-6 text-foreground">
+                  Company
+                </h3>
                 <ul role="list" className="mt-6 space-y-4">
                   {navigation.company.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className="text-sm leading-6 text-muted-foreground hover:text-primary transition-colors">
+                      <Link
+                        href={item.href}
+                        className="text-sm leading-6 text-muted-foreground hover:text-primary transition-colors"
+                      >
                         {item.name}
                       </Link>
                     </li>
@@ -109,11 +119,16 @@ export function Footer() {
             </div>
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-sm font-semibold leading-6 text-foreground">Resources</h3>
+                <h3 className="text-sm font-semibold leading-6 text-foreground">
+                  Resources
+                </h3>
                 <ul role="list" className="mt-6 space-y-4">
                   {navigation.resources.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className="text-sm leading-6 text-muted-foreground hover:text-primary transition-colors">
+                      <Link
+                        href={item.href}
+                        className="text-sm leading-6 text-muted-foreground hover:text-primary transition-colors"
+                      >
                         {item.name}
                       </Link>
                     </li>
@@ -121,11 +136,16 @@ export function Footer() {
                 </ul>
               </div>
               <div className="mt-10 md:mt-0">
-                <h3 className="text-sm font-semibold leading-6 text-foreground">Legal</h3>
+                <h3 className="text-sm font-semibold leading-6 text-foreground">
+                  Legal
+                </h3>
                 <ul role="list" className="mt-6 space-y-4">
                   {navigation.legal.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className="text-sm leading-6 text-muted-foreground hover:text-primary transition-colors">
+                      <Link
+                        href={item.href}
+                        className="text-sm leading-6 text-muted-foreground hover:text-primary transition-colors"
+                      >
                         {item.name}
                       </Link>
                     </li>

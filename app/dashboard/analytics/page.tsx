@@ -198,7 +198,7 @@ export default function AnalyticsPage() {
                   .catch(() => ({
                     data: { statistics: { totalExpenses: 0 } },
                   })),
-              ]).then(([income, expenses]) => ({
+              ]).then(([income, expenses]: [any, any]) => ({
                 month: date.toLocaleDateString("en-US", { month: "short" }),
                 revenue: income?.data?.statistics?.totalIncome || 0,
                 expenses: expenses?.data?.statistics?.totalExpenses || 0,

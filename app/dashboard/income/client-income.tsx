@@ -518,7 +518,7 @@ export function ClientIncome({
                         {stats.topEarner.name}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {stats.topEarner.transactions || 0} transactions
+                        Top earner
                       </div>
                     </div>
                   </div>

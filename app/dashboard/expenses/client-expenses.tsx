@@ -718,7 +718,6 @@ export function ClientExpenses({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={stats.topSpender.avatar} />
                       <AvatarFallback className="text-xs">
                         {stats.topSpender.name
                           .split(" ")
@@ -731,7 +730,7 @@ export function ClientExpenses({
                         {stats.topSpender.name}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {stats.topSpender.transactions || 0} transactions
+                        Top spender
                       </div>
                     </div>
                   </div>

@@ -1,71 +1,123 @@
-import { TrendingUp, Users, DollarSign } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  TrendingUp,
+  Users,
+  DollarSign,
+  BarChart3,
+  Clock,
+  Target,
+} from "lucide-react";
 
 const stats = [
-  { 
-    id: 1, 
-    name: 'Businesses trust Fintracker', 
-    value: '50,000+',
+  {
+    id: 1,
+    name: "Active Businesses",
+    value: "500+",
+    description: "Growing companies trust FinTracker",
     icon: Users,
-    description: 'From startups to enterprises'
+    trend: "+127%",
+    trendLabel: "from last year",
   },
-  { 
-    id: 2, 
-    name: 'In transactions processed', 
-    value: '$2.5B+',
+  {
+    id: 2,
+    name: "Revenue Tracked",
+    value: "$50M+",
+    description: "Total revenue managed through our platform",
     icon: DollarSign,
-    description: 'Secure and reliable processing'
+    trend: "+89%",
+    trendLabel: "month over month",
   },
-  { 
-    id: 3, 
-    name: 'Average ROI improvement', 
-    value: '35%',
+  {
+    id: 3,
+    name: "Time Saved",
+    value: "15hrs",
+    description: "Average weekly time saved per business",
+    icon: Clock,
+    trend: "95%",
+    trendLabel: "reduction in manual work",
+  },
+  {
+    id: 4,
+    name: "ROI Improvement",
+    value: "34%",
+    description: "Average ROI increase after using FinTracker",
     icon: TrendingUp,
-    description: 'Better financial decisions'
+    trend: "+12%",
+    trendLabel: "vs industry average",
+  },
+  {
+    id: 5,
+    name: "Data Points",
+    value: "10M+",
+    description: "Financial data points processed monthly",
+    icon: BarChart3,
+    trend: "+156%",
+    trendLabel: "growth in data volume",
+  },
+  {
+    id: 6,
+    name: "Accuracy Rate",
+    value: "99.8%",
+    description: "Financial calculation accuracy",
+    icon: Target,
+    trend: "99.8%",
+    trendLabel: "consistent accuracy",
   },
 ];
 
 export function StatsSection() {
   return (
-    <div className="bg-background py-24 sm:py-32">
+    <section className="py-24 sm:py-32 bg-gradient-to-br from-primary/5 to-accent/5">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl lg:max-w-none">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Trusted by businesses worldwide
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-muted-foreground">
-              Join thousands of companies that have transformed their financial management with Fintracker.
-            </p>
-          </div>
-          <dl className="mt-16 grid grid-cols-1 gap-8 overflow-hidden text-center sm:grid-cols-2 lg:grid-cols-3">
-            {stats.map((stat) => (
-              <div key={stat.id} className="flex flex-col bg-muted/50 p-12 rounded-2xl group hover:bg-muted/70 transition-all duration-300 hover:shadow-lg border border-border/50">
-                {/* Icon at the top */}
-                <div className="flex items-center justify-center mb-8">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
-                    <stat.icon className="h-8 w-8 text-primary" />
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Trusted by Growing Businesses Worldwide
+          </h2>
+          <p className="mt-6 text-lg leading-8 text-muted-foreground">
+            See the impact FinTracker is making for digital businesses like
+            yours.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+          {stats.map((stat) => (
+            <Card key={stat.id} className="relative overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
+                    <stat.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {stat.trend} {stat.trendLabel}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-3xl font-bold text-foreground">
+                    {stat.value}
+                  </div>
+                  <div className="font-semibold text-sm text-foreground">
+                    {stat.name}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {stat.description}
                   </div>
                 </div>
-                
-                {/* Main value */}
-                <dd className="text-4xl font-bold tracking-tight text-foreground mb-4 group-hover:text-primary transition-colors duration-300">
-                  {stat.value}
-                </dd>
-                
-                {/* Title */}
-                <dt className="text-base font-semibold leading-6 text-foreground mb-3">
-                  {stat.name}
-                </dt>
-                
-                {/* Description */}
-                <dd className="text-sm text-muted-foreground leading-relaxed">
-                  {stat.description}
-                </dd>
-              </div>
-            ))}
-          </dl>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-16 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-background/80 backdrop-blur-sm border border-border px-6 py-3">
+            <TrendingUp className="h-4 w-4 text-green-500" />
+            <span className="text-sm font-medium">
+              Growing 40% month-over-month
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
