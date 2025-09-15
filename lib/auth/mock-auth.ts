@@ -1,4 +1,3 @@
-
 // This allows any credentials to work, especially demo credentials
 
 export interface MockUser {
@@ -18,17 +17,17 @@ export interface MockAuthResponse {
 
 // Mock user data
 const DEMO_USER: MockUser = {
-  id: 'demo-user-id-12345',
-  email: 'demo@fintracker.com',
+  id: "demo-user-id-12345",
+  email: "info.fintracker@gmail.com",
   user_metadata: {
-    full_name: 'Demo User',
-    company: 'Fintracker Demo',
-    role: 'owner'
-  }
+    full_name: "Demo User",
+    company: "Fintracker Demo",
+    role: "owner",
+  },
 };
 
 // Store current user in localStorage for persistence
-const AUTH_STORAGE_KEY = 'fintracker_mock_auth_user';
+const AUTH_STORAGE_KEY = "fintracker_mock_auth_user";
 
 export class MockAuth {
   private static instance: MockAuth;
@@ -37,14 +36,14 @@ export class MockAuth {
 
   constructor() {
     // Load user from localStorage on initialization (only in browser)
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem(AUTH_STORAGE_KEY);
         if (stored) {
           this.currentUser = JSON.parse(stored);
         }
       } catch (e) {
-        console.warn('Failed to parse stored auth user');
+        console.warn("Failed to parse stored auth user");
       }
     }
   }
@@ -59,10 +58,10 @@ export class MockAuth {
   // Mock sign in - accepts any credentials
   async signIn(email: string, password: string): Promise<MockAuthResponse> {
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // For demo credentials, return demo user
-    if (email === 'demo@fintracker.com' && password === 'fintracker123') {
+    if (email === "info.fintracker@gmail.com" && password === "fintracker123") {
       this.setCurrentUser(DEMO_USER);
       return { user: DEMO_USER, error: null };
     }
@@ -72,10 +71,13 @@ export class MockAuth {
       id: `user-${Date.now()}`,
       email: email,
       user_metadata: {
-        full_name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        company: 'Your Company',
-        role: 'owner'
-      }
+        full_name: email
+          .split("@")[0]
+          .replace(/[._]/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase()),
+        company: "Your Company",
+        role: "owner",
+      },
     };
 
     this.setCurrentUser(genericUser);
@@ -91,7 +93,7 @@ export class MockAuth {
     company: string;
   }): Promise<MockAuthResponse> {
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
     const newUser: MockUser = {
       id: `user-${Date.now()}`,
@@ -99,8 +101,8 @@ export class MockAuth {
       user_metadata: {
         full_name: `${data.firstName} ${data.lastName}`,
         company: data.company,
-        role: 'owner'
-      }
+        role: "owner",
+      },
     };
 
     this.setCurrentUser(newUser);
@@ -119,20 +121,24 @@ export class MockAuth {
   }
 
   // Get current session
-  async getSession(): Promise<{ data: { session: { user: MockUser } | null } }> {
+  async getSession(): Promise<{
+    data: { session: { user: MockUser } | null };
+  }> {
     return {
       data: {
-        session: this.currentUser ? { user: this.currentUser } : null
-      }
+        session: this.currentUser ? { user: this.currentUser } : null,
+      },
     };
   }
 
   // Subscribe to auth state changes
-  onAuthStateChange(callback: (event: string, session: { user: MockUser } | null) => void) {
+  onAuthStateChange(
+    callback: (event: string, session: { user: MockUser } | null) => void
+  ) {
     const listener = (user: MockUser | null) => {
-      callback(user ? 'SIGNED_IN' : 'SIGNED_OUT', user ? { user } : null);
+      callback(user ? "SIGNED_IN" : "SIGNED_OUT", user ? { user } : null);
     };
-    
+
     this.listeners.push(listener);
 
     // Return unsubscribe function
@@ -144,17 +150,17 @@ export class MockAuth {
             if (index > -1) {
               this.listeners.splice(index, 1);
             }
-          }
-        }
-      }
+          },
+        },
+      },
     };
   }
 
   private setCurrentUser(user: MockUser | null) {
     this.currentUser = user;
-    
+
     // Store in localStorage (only in browser)
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
         if (user) {
           localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
@@ -162,12 +168,12 @@ export class MockAuth {
           localStorage.removeItem(AUTH_STORAGE_KEY);
         }
       } catch (e) {
-        console.warn('Failed to store auth user');
+        console.warn("Failed to store auth user");
       }
     }
 
     // Notify listeners
-    this.listeners.forEach(listener => listener(user));
+    this.listeners.forEach((listener) => listener(user));
   }
 }
 

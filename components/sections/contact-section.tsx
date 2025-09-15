@@ -72,10 +72,10 @@ export function ContactSection() {
                     Email us
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    hello@fintracker.com
+                    info.fintracker@gmail.com
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    support@fintracker.com
+                    hello.fintracker@gmail.com
                   </p>
                 </div>
               </div>

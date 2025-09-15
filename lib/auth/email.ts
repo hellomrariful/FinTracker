@@ -1,22 +1,22 @@
-import nodemailer from 'nodemailer';
-import { IUser } from '@/lib/models/User';
+import nodemailer from "nodemailer";
+import { IUser } from "@/lib/models/User";
 
-const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@fintracker.com';
+const EMAIL_FROM = process.env.EMAIL_FROM || "info.fintracker@gmail.com";
 const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587");
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://fintracker.io";
 
 const createTransporter = () => {
-  if (!SMTP_HOST || process.env.NODE_ENV === 'development') {
+  if (!SMTP_HOST || process.env.NODE_ENV === "development") {
     return {
       sendMail: async (options: any) => {
-        console.log('📧 Email would be sent:');
-        console.log('To:', options.to);
-        console.log('Subject:', options.subject);
-        console.log('Content:', options.html || options.text);
-        return { messageId: 'dev-' + Date.now() };
+        console.log("📧 Email would be sent:");
+        console.log("To:", options.to);
+        console.log("Subject:", options.subject);
+        console.log("Content:", options.html || options.text);
+        return { messageId: "dev-" + Date.now() };
       },
     } as any;
   }
@@ -35,12 +35,14 @@ const createTransporter = () => {
 const transporter = createTransporter();
 
 export async function sendVerificationEmail(user: IUser, token: string) {
-  const verificationUrl = `${APP_URL}/auth/verify-email?email=${encodeURIComponent(user.email)}`;
+  const verificationUrl = `${APP_URL}/auth/verify-email?email=${encodeURIComponent(
+    user.email
+  )}`;
 
   const mailOptions = {
     from: EMAIL_FROM,
     to: user.email,
-    subject: 'Verify your FinTracker account',
+    subject: "Verify your FinTracker account",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">Welcome to FinTracker!</h2>
@@ -73,7 +75,7 @@ export async function sendWelcomeEmail(user: IUser) {
   const mailOptions = {
     from: EMAIL_FROM,
     to: user.email,
-    subject: 'Welcome to FinTracker',
+    subject: "Welcome to FinTracker",
     html: `<p>Hello ${user.firstName}, your account is verified. Visit your dashboard: <a href="${dashboardUrl}">Dashboard</a></p>`,
     text: `Dashboard: ${dashboardUrl}`,
   };
@@ -82,12 +84,14 @@ export async function sendWelcomeEmail(user: IUser) {
 }
 
 export async function sendPasswordResetEmail(user: IUser, token: string) {
-  const resetUrl = `${APP_URL}/auth/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
+  const resetUrl = `${APP_URL}/auth/reset-password?token=${token}&email=${encodeURIComponent(
+    user.email
+  )}`;
 
   const mailOptions = {
     from: EMAIL_FROM,
     to: user.email,
-    subject: 'Reset Your FinTracker Password',
+    subject: "Reset Your FinTracker Password",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">Password Reset Request</h2>
@@ -117,4 +121,3 @@ export async function sendPasswordResetEmail(user: IUser, token: string) {
   const info = await transporter.sendMail(mailOptions);
   return info;
 }
-

@@ -19,7 +19,7 @@ export function SigninForm() {
   const router = useRouter();
 
   const handleDemoLogin = () => {
-    setEmail("demo@fintracker.io");
+    setEmail("info.fintracker@gmail.com");
     setPassword("demo1234");
     // Auto-submit after setting values
     setTimeout(() => {
@@ -81,7 +81,7 @@ export function SigninForm() {
               Try Demo Account
             </h3>
             <p className="text-xs text-blue-700 mt-1">
-              demo@fintracker.io • demo1234
+              info.fintracker@gmail.com • demo1234
             </p>
           </div>
           <Button

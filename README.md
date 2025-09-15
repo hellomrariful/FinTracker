@@ -4,7 +4,7 @@
 
 Transform your financial chaos into clear, actionable insights. FinTracker is built specifically for performance marketing agencies, digital businesses, and growing companies who need more than basic accounting software.
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-blue?style=for-the-badge)](https://fintracker.vercel.app/demo)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-blue?style=for-the-badge)](https://fintracker.io/demo)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
@@ -13,8 +13,8 @@ Transform your financial chaos into clear, actionable insights. FinTracker is bu
 
 Experience FinTracker with real data and interactions:
 
-- **🌐 [Live Website](https://fintracker.vercel.app)** - Complete marketing site
-- **📊 [Interactive Dashboard Demo](https://fintracker.vercel.app/demo)** - Try the actual interface
+- **🌐 [Live Website](https://fintracker.io)** - Complete marketing site
+- **📊 [Interactive Dashboard Demo](https://fintracker.io/demo)** - Try the actual interface
 - **📱 Fully Responsive** - Works perfectly on all devices
 
 ## ✨ **Why FinTracker?**
@@ -163,7 +163,7 @@ SMTP_HOST=your_smtp_host
 SMTP_USER=your_smtp_username
 SMTP_PASS=your_smtp_password
 EMAIL_FROM=your_sender_email
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=https://fintracker.io
 ```
 
 5. **Run Development Server**
@@ -323,10 +323,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 **Support & Contact**
 
-- **Website**: [fintracker.vercel.app](https://fintracker.vercel.app)
-- **Email**: hello@fintracker.com
-- **Documentation**: [fintracker.vercel.app/docs](https://fintracker.vercel.app/docs)
-- **Support**: [fintracker.vercel.app/help](https://fintracker.vercel.app/help)
+- **Website**: [fintracker.io](https://fintracker.io)
+- **Email**: info.fintracker@gmail.com
+- **Documentation**: [fintracker.io/docs](https://fintracker.io/docs)
+- **Support**: [fintracker.io/help](https://fintracker.io/help)
 
 ---
 

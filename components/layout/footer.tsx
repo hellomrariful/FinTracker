@@ -3,7 +3,7 @@ import { BarChart3, Github, Twitter, Linkedin, Youtube } from "lucide-react";
 
 const navigation = {
   product: [
-    { name: "Features", href: "#features" },
+    { name: "Features", href: "/#features" },
     { name: "Pricing", href: "/pricing" },
     { name: "Security", href: "/security" },
     { name: "Roadmap", href: "/roadmap" },

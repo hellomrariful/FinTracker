@@ -481,7 +481,9 @@ export default function SettingsPage() {
                     id="email"
                     type="email"
                     defaultValue={
-                      profile?.email || user?.email || "demo@fintracker.io"
+                      profile?.email ||
+                      user?.email ||
+                      "info.fintracker@gmail.com"
                     }
                   />
                 </div>
