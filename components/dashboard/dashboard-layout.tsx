@@ -231,8 +231,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={profile?.avatar || user?.avatar}
+                        src={profile?.avatar || user?.avatar || undefined}
                         alt="Profile"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
                       />
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>

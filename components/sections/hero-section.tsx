@@ -48,28 +48,27 @@ export function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/demo">
+            <Link href="/pricing">
               <Button
                 size="lg"
                 className="group relative overflow-hidden px-8 py-4 text-lg font-semibold"
               >
                 <span className="relative z-10 flex items-center">
-                  Try Live Demo
+                  Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 transition-opacity group-hover:opacity-100" />
               </Button>
             </Link>
-            <Link href="/pricing">
-              <Button
-                variant="outline"
-                size="lg"
-                className="group px-8 py-4 text-lg font-semibold"
-              >
-                <Play className="mr-2 h-5 w-5 transition-transform group-hover:scale-110" />
-                Start Free Trial
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              size="lg"
+              className="group px-8 py-4 text-lg font-semibold"
+              onClick={handleWatchDemo}
+            >
+              <Play className="mr-2 h-5 w-5 transition-transform group-hover:scale-110" />
+              Watch Demo
+            </Button>
           </div>
 
           {/* Trust Indicators */}
@@ -122,7 +121,7 @@ export function HeroSection() {
       <VideoModal
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
-        videoUrl="https://www.youtube.com/watch?v=7Dmozfs0Q44&ab_channel=ArifulIslam"
+        videoUrl="https://youtu.be/7Dmozfs0Q44"
         title="FinTracker Demo Video"
       />
     </div>

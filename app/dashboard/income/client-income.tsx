@@ -505,7 +505,12 @@ export function ClientIncome({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={stats.topEarner.avatar} />
+                      <AvatarImage
+                        src={stats.topEarner.avatar || undefined}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
                       <AvatarFallback className="text-xs">
                         {stats.topEarner.name
                           .split(" ")
@@ -642,7 +647,12 @@ export function ClientIncome({
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Avatar className="h-6 w-6">
-                                <AvatarImage src={employee?.avatar} />
+                                <AvatarImage
+                                  src={employee?.avatar || undefined}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                />
                                 <AvatarFallback className="text-xs">
                                   {employee?.name
                                     .split(" ")

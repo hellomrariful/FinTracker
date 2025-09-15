@@ -789,7 +789,12 @@ export default function AnalyticsPage() {
                         </div>
 
                         <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-                          <AvatarImage src={employee.avatar} />
+                          <AvatarImage
+                            src={employee.avatar || undefined}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
                           <AvatarFallback className="text-xs font-medium">
                             {employee.name
                               .split(" ")

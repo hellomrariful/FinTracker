@@ -328,7 +328,7 @@ export default function SettingsPage() {
           name="avatar"
           type="url"
           defaultValue={employee?.avatar}
-          placeholder="https://example.com/avatar.jpg"
+          placeholder="https://example.com/avatar.jpg (optional)"
         />
       </div>
 
@@ -428,11 +428,10 @@ export default function SettingsPage() {
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-20 w-20">
                     <AvatarImage
-                      src={
-                        profile?.avatar ||
-                        user?.avatar ||
-                        "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face"
-                      }
+                      src={profile?.avatar || user?.avatar || undefined}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
                     />
                     <AvatarFallback>
                       {(profile?.name || user?.name || "Demo User")
@@ -625,7 +624,12 @@ export default function SettingsPage() {
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <Avatar className="h-8 w-8">
-                                <AvatarImage src={employee.avatar} />
+                                <AvatarImage
+                                  src={employee.avatar || undefined}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                />
                                 <AvatarFallback>
                                   {employee.name
                                     .split(" ")
