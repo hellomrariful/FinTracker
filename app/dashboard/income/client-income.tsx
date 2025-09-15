@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 // Dynamically import the DashboardLayout with no SSR
 const DashboardLayout = dynamic(
@@ -102,13 +102,17 @@ export function ClientIncome({
 }: ClientIncomeProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [incomeTransactions, setIncomeTransactions] = useState<IncomeTransaction[]>([]);
+  const [incomeTransactions, setIncomeTransactions] = useState<
+    IncomeTransaction[]
+  >([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(initialShowAddDialog);
-  const [editingIncome, setEditingIncome] = useState<IncomeTransaction | null>(null);
+  const [editingIncome, setEditingIncome] = useState<IncomeTransaction | null>(
+    null
+  );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Function to fetch all required data
@@ -119,62 +123,134 @@ export function ClientIncome({
       const now = new Date();
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth();
-      
-      const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
-      const endOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
-      const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1).toISOString().split('T')[0];
-      const endOfLastMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
 
-      // Fetch all required data in parallel using authenticated API client
-      const [incomeResponse, employeesResponse, categoriesResponse, statsResponse] = await Promise.all([
-        api.get<{ incomes: IncomeTransaction[], pagination?: any, stats?: any }>('/api/income'),
-        api.get<{ success: boolean, data: Employee[] }>('/api/employees'),
-        api.get<Category[]>('/api/categories?type=income'),
+      const startOfMonth = new Date(currentYear, currentMonth, 1)
+        .toISOString()
+        .split("T")[0];
+      const endOfMonth = new Date(currentYear, currentMonth + 1, 0)
+        .toISOString()
+        .split("T")[0];
+      const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1)
+        .toISOString()
+        .split("T")[0];
+      const endOfLastMonth = new Date(currentYear, currentMonth, 0)
+        .toISOString()
+        .split("T")[0];
+
+      // Fetch all required data in parallel using authenticated API client with error handling
+      const [
+        incomeResponse,
+        employeesResponse,
+        categoriesResponse,
+        statsResponse,
+      ] = await Promise.all([
+        api
+          .get<{
+            incomes: IncomeTransaction[];
+            pagination?: any;
+            stats?: any;
+          }>("/api/income")
+          .catch((err) => {
+            console.error("Failed to fetch income:", err);
+            return { incomes: [] };
+          }),
+        api
+          .get<{ success: boolean; data: Employee[] }>("/api/employees")
+          .catch((err) => {
+            console.error("Failed to fetch employees:", err);
+            return { success: false, data: [] };
+          }),
+        api.get<Category[]>("/api/categories?type=income").catch((err) => {
+          console.error("Failed to fetch categories:", err);
+          return [];
+        }),
         Promise.all([
-          api.get<{ data: { statistics: any } }>('/api/income/statistics'),
-          api.get<{ data: { statistics: any } }>(`/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
-          api.get<{ data: { statistics: any } }>(`/api/income/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
-          api.get<{ data: any[] }>('/api/employees/performance?months=1')
-        ])
+          api
+            .get<{ data: { statistics: any } }>("/api/income/statistics")
+            .catch((err) => {
+              console.error("Failed to fetch lifetime stats:", err);
+              return { data: { statistics: { totalIncome: 0 } } };
+            }),
+          api
+            .get<{ data: { statistics: any } }>(
+              `/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`
+            )
+            .catch((err) => {
+              console.error("Failed to fetch current month stats:", err);
+              return { data: { statistics: { totalIncome: 0 } } };
+            }),
+          api
+            .get<{ data: { statistics: any } }>(
+              `/api/income/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`
+            )
+            .catch((err) => {
+              console.error("Failed to fetch last month stats:", err);
+              return { data: { statistics: { totalIncome: 0 } } };
+            }),
+          api
+            .get<{ data: any[] }>("/api/employees/performance?months=1")
+            .catch((err) => {
+              console.error("Failed to fetch employee performance:", err);
+              return { data: [] };
+            }),
+        ]),
       ]);
 
       // Set income transactions - ensure it's always an array
       const incomeData = incomeResponse?.incomes || [];
       setIncomeTransactions(Array.isArray(incomeData) ? incomeData : []);
-      
+
       // Set employees
       const employeesData = employeesResponse?.data || [];
       setEmployees(Array.isArray(employeesData) ? employeesData : []);
-      
+
       // Set categories - this comes as direct array
-      const categoriesData = Array.isArray(categoriesResponse) ? categoriesResponse : [];
+      const categoriesData = Array.isArray(categoriesResponse)
+        ? categoriesResponse
+        : [];
       setCategories(categoriesData);
 
-      // Extract and process statistics
-      const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] = statsResponse;
-      const topEmployee = employeeStats?.data?.[0]; // First employee is the top earner due to sorting
-      
+      // Extract and process statistics with proper error handling
+      const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] =
+        statsResponse;
+
+      // Safely extract employee data
+      const employeeData = Array.isArray(employeeStats?.data)
+        ? employeeStats.data
+        : [];
+      const topEmployee = employeeData[0]; // First employee is the top earner due to sorting
+
       // Get total income from statistics response
-      const lifetimeTotal = lifetimeStats.data?.statistics?.totalIncome || 0;
-      const currentMonthTotal = currentMonthStats.data?.statistics?.totalIncome || 0;
-      const lastMonthTotal = lastMonthStats.data?.statistics?.totalIncome || 0;
-      
-      const incomeGrowth = lastMonthTotal > 0
-        ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
-        : 0;
+      const lifetimeTotal = lifetimeStats?.data?.statistics?.totalIncome || 0;
+      const currentMonthTotal =
+        currentMonthStats?.data?.statistics?.totalIncome || 0;
+      const lastMonthTotal = lastMonthStats?.data?.statistics?.totalIncome || 0;
+
+      const incomeGrowth =
+        lastMonthTotal > 0
+          ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
+          : 0;
 
       // Get source stats from API response or compute from transactions
-      const bySource = lifetimeStats.data?.statistics?.incomeBySource?.reduce((acc: Record<string, number>, item: any) => {
-        acc[item._id] = item.total;
-        return acc;
-      }, {}) || incomeData.reduce((acc: Record<string, number>, inc: IncomeTransaction) => {
-        acc[inc.source] = (acc[inc.source] || 0) + inc.amount;
-        return acc;
-      }, {});
+      const sourceStats = lifetimeStats?.data?.statistics?.incomeBySource;
+      const bySource = Array.isArray(sourceStats)
+        ? sourceStats.reduce((acc: Record<string, number>, item: any) => {
+            acc[item._id] = item.total;
+            return acc;
+          }, {})
+        : incomeData.reduce(
+            (acc: Record<string, number>, inc: IncomeTransaction) => {
+              acc[inc.source] = (acc[inc.source] || 0) + inc.amount;
+              return acc;
+            },
+            {}
+          );
 
-      const highestSource: [string, number] = (Object.entries(bySource) as [string, number][])
-        .sort(([,a], [,b]) => b - a)
-        .at(0) || ['', 0];
+      const highestSource: [string, number] = (
+        Object.entries(bySource) as [string, number][]
+      )
+        .sort(([, a], [, b]) => b - a)
+        .at(0) || ["", 0];
 
       setStats({
         lifetimeIncome: lifetimeTotal,
@@ -182,17 +258,19 @@ export function ClientIncome({
         lastMonthIncome: lastMonthTotal,
         incomeGrowth,
         bySource,
-        byEmployee: (employeeStats?.data || []).reduce((acc: Record<string, number>, emp: any) => {
-          acc[emp.id] = emp.totalIncome;
-          return acc;
-        }, {}),
+        byEmployee: employeeData.reduce(
+          (acc: Record<string, number>, emp: any) => {
+            acc[emp.id] = emp.totalIncome;
+            return acc;
+          },
+          {}
+        ),
         highestSource,
-        topEarner: topEmployee
+        topEarner: topEmployee,
       });
-
     } catch (error) {
-      console.error('Error fetching income data:', error);
-      toast.error('Failed to load income data');
+      console.error("Error fetching income data:", error);
+      toast.error("Failed to load income data");
     } finally {
       setIsLoading(false);
     }
@@ -204,12 +282,14 @@ export function ClientIncome({
   }, []);
 
   // Get unique sources for dropdown - filter out empty strings
-  const existingSources = Array.isArray(incomeTransactions) 
-    ? [...new Set(incomeTransactions.map(t => t.source))].filter(source => source && source.trim() !== '')
+  const existingSources = Array.isArray(incomeTransactions)
+    ? [...new Set(incomeTransactions.map((t) => t.source))].filter(
+        (source) => source && source.trim() !== ""
+      )
     : [];
 
   // Filter income transactions based on search
-  const filteredIncomeTransactions = Array.isArray(incomeTransactions) 
+  const filteredIncomeTransactions = Array.isArray(incomeTransactions)
     ? incomeTransactions.filter(
         (income) =>
           income.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -235,8 +315,8 @@ export function ClientIncome({
         await fetchData();
         toast.success("Income transaction deleted successfully");
       } catch (error) {
-        console.error('Error deleting income:', error);
-        toast.error('Failed to delete income transaction');
+        console.error("Error deleting income:", error);
+        toast.error("Failed to delete income transaction");
       }
     }
   };
@@ -252,7 +332,9 @@ export function ClientIncome({
         <div className="min-h-[400px] flex items-center justify-center">
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading income data...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading income data...
+            </p>
           </div>
         </div>
       </DashboardLayout>
@@ -440,10 +522,14 @@ export function ClientIncome({
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-8">
                         {searchTerm ? (
-                          <p className="text-muted-foreground">No income transactions match your search</p>
+                          <p className="text-muted-foreground">
+                            No income transactions match your search
+                          </p>
                         ) : (
                           <div className="flex flex-col items-center gap-2">
-                            <p className="text-muted-foreground">No income transactions yet</p>
+                            <p className="text-muted-foreground">
+                              No income transactions yet
+                            </p>
                             <Button
                               variant="outline"
                               size="sm"

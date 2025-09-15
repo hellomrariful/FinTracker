@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 // Dynamically import the DashboardLayout with no SSR
 const DashboardLayout = dynamic(
@@ -74,7 +74,7 @@ type ExpenseTransaction = {
   employeeId?: string;
   status: string;
   reimbursable?: boolean;
-  reimbursementStatus?: 'pending' | 'approved' | 'rejected' | 'paid';
+  reimbursementStatus?: "pending" | "approved" | "rejected" | "paid";
 };
 
 type Employee = {
@@ -126,7 +126,8 @@ export function ClientExpenses({
   const [stats, setStats] = useState<Stats | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(initialShowAddDialog);
-  const [editingExpense, setEditingExpense] = useState<ExpenseTransaction | null>(null);
+  const [editingExpense, setEditingExpense] =
+    useState<ExpenseTransaction | null>(null);
   const [newCategory, setNewCategory] = useState("");
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -140,59 +141,137 @@ export function ClientExpenses({
       const now = new Date();
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth();
-      
-      const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
-      const endOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
-      const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1).toISOString().split('T')[0];
-      const endOfLastMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
 
-      // Fetch all required data in parallel using authenticated API client
-      const [expensesResponse, employeesResponse, categoriesResponse, statsResponse] = await Promise.all([
-        api.get<{ expenses: ExpenseTransaction[], pagination?: any, stats?: any }>('/api/expenses'),
-        api.get<{ success: boolean, data: Employee[] }>('/api/employees'),
-        api.get<Category[]>('/api/categories?type=expense'),
+      const startOfMonth = new Date(currentYear, currentMonth, 1)
+        .toISOString()
+        .split("T")[0];
+      const endOfMonth = new Date(currentYear, currentMonth + 1, 0)
+        .toISOString()
+        .split("T")[0];
+      const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1)
+        .toISOString()
+        .split("T")[0];
+      const endOfLastMonth = new Date(currentYear, currentMonth, 0)
+        .toISOString()
+        .split("T")[0];
+
+      // Fetch all required data in parallel using authenticated API client with error handling
+      const [
+        expensesResponse,
+        employeesResponse,
+        categoriesResponse,
+        statsResponse,
+      ] = await Promise.all([
+        api
+          .get<{
+            expenses: ExpenseTransaction[];
+            pagination?: any;
+            stats?: any;
+          }>("/api/expenses")
+          .catch((err) => {
+            console.error("Failed to fetch expenses:", err);
+            return { expenses: [] };
+          }),
+        api
+          .get<{ success: boolean; data: Employee[] }>("/api/employees")
+          .catch((err) => {
+            console.error("Failed to fetch employees:", err);
+            return { success: false, data: [] };
+          }),
+        api.get<Category[]>("/api/categories?type=expense").catch((err) => {
+          console.error("Failed to fetch categories:", err);
+          return [];
+        }),
         Promise.all([
-          api.get<{ data: { statistics: { totalExpenses: number } } }>('/api/expenses/statistics'),
-          api.get<{ data: { statistics: { totalExpenses: number } } }>(`/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
-          api.get<{ data: { statistics: { totalExpenses: number } } }>(`/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
-          api.get<{ data: EmployeeSpendingData[] }>('/api/employees/spending?months=1')
-        ])
+          api
+            .get<{ data: { statistics: { totalExpenses: number } } }>(
+              "/api/expenses/statistics"
+            )
+            .catch((err) => {
+              console.error("Failed to fetch lifetime expense stats:", err);
+              return { data: { statistics: { totalExpenses: 0 } } };
+            }),
+          api
+            .get<{ data: { statistics: { totalExpenses: number } } }>(
+              `/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`
+            )
+            .catch((err) => {
+              console.error(
+                "Failed to fetch current month expense stats:",
+                err
+              );
+              return { data: { statistics: { totalExpenses: 0 } } };
+            }),
+          api
+            .get<{ data: { statistics: { totalExpenses: number } } }>(
+              `/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`
+            )
+            .catch((err) => {
+              console.error("Failed to fetch last month expense stats:", err);
+              return { data: { statistics: { totalExpenses: 0 } } };
+            }),
+          api
+            .get<{ data: EmployeeSpendingData[] }>(
+              "/api/employees/spending?months=1"
+            )
+            .catch((err) => {
+              console.error("Failed to fetch employee spending:", err);
+              return { data: [] };
+            }),
+        ]),
       ]);
 
       // Set expenses - extract from expenses property
       const expensesData = expensesResponse?.expenses || [];
       setExpenses(Array.isArray(expensesData) ? expensesData : []);
-      
+
       // Set employees
       const employeesData = employeesResponse?.data || [];
       setEmployees(Array.isArray(employeesData) ? employeesData : []);
-      
+
       // Set categories - this comes as direct array
-      const categoriesData = Array.isArray(categoriesResponse) ? categoriesResponse : [];
+      const categoriesData = Array.isArray(categoriesResponse)
+        ? categoriesResponse
+        : [];
       setCategories(categoriesData);
 
-      // Extract and process statistics
-      const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] = statsResponse;
-      const employeeStatsData = employeeStats?.data || [];
+      // Extract and process statistics with proper error handling
+      const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] =
+        statsResponse;
+
+      // Safely extract employee data
+      const employeeStatsData = Array.isArray(employeeStats?.data)
+        ? employeeStats.data
+        : [];
       const topEmployee = employeeStatsData[0]; // First employee is the top spender due to sorting
-      
+
       const lifetimeTotal = lifetimeStats?.data?.statistics?.totalExpenses || 0;
-      const currentMonthTotal = currentMonthStats?.data?.statistics?.totalExpenses || 0;
-      const lastMonthTotal = lastMonthStats?.data?.statistics?.totalExpenses || 0;
-      
-      const expenseGrowth = lastMonthTotal > 0
-        ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
-        : 0;
+      const currentMonthTotal =
+        currentMonthStats?.data?.statistics?.totalExpenses || 0;
+      const lastMonthTotal =
+        lastMonthStats?.data?.statistics?.totalExpenses || 0;
+
+      const expenseGrowth =
+        lastMonthTotal > 0
+          ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
+          : 0;
 
       // Compute category stats from the expenses
-      const byCategory = expensesData.reduce((acc: Record<string, number>, exp: ExpenseTransaction) => {
-        acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
-        return acc;
-      }, {});
+      const byCategory = Array.isArray(expensesData)
+        ? expensesData.reduce(
+            (acc: Record<string, number>, exp: ExpenseTransaction) => {
+              acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+              return acc;
+            },
+            {}
+          )
+        : {};
 
-      const highestCategory: [string, number] = (Object.entries(byCategory) as [string, number][])
-        .sort(([,a], [,b]) => b - a)
-        .at(0) || ['', 0];
+      const highestCategory: [string, number] = (
+        Object.entries(byCategory) as [string, number][]
+      )
+        .sort(([, a], [, b]) => b - a)
+        .at(0) || ["", 0];
 
       setStats({
         lifetimeExpenses: lifetimeTotal,
@@ -201,16 +280,18 @@ export function ClientExpenses({
         expenseGrowth,
         byCategory,
         highestCategory,
-        byEmployee: employeeStatsData.reduce((acc: Record<string, number>, emp: any) => {
-          acc[emp.id] = emp.totalSpent;
-          return acc;
-        }, {}),
-        topSpender: topEmployee
+        byEmployee: employeeStatsData.reduce(
+          (acc: Record<string, number>, emp: any) => {
+            acc[emp.id] = emp.totalSpent;
+            return acc;
+          },
+          {}
+        ),
+        topSpender: topEmployee,
       });
-
     } catch (error) {
-      console.error('Error fetching expense data:', error);
-      toast.error('Failed to load expense data');
+      console.error("Error fetching expense data:", error);
+      toast.error("Failed to load expense data");
     } finally {
       setIsLoading(false);
     }
@@ -255,21 +336,24 @@ export function ClientExpenses({
 
     try {
       let categoryName = selectedCategory;
-      
+
       // Create new category if needed
       if (selectedCategory === "new" && newCategory.trim()) {
-        const newCat = await api.post<any>('/api/categories', {
+        const newCat = await api.post<any>("/api/categories", {
           name: newCategory.trim(),
-          type: 'expense'
+          type: "expense",
         });
-        
+
         // Handle both possible response structures
         categoryName = newCat?.data?.name || newCat?.name || newCategory.trim();
-        
+
         // Refresh categories list
-        const updatedCategories = await api.get<any>('/api/categories?type=expense');
+        const updatedCategories = await api.get<any>(
+          "/api/categories?type=expense"
+        );
         // Handle paginated response
-        const categoriesData = updatedCategories?.data || updatedCategories?.items || [];
+        const categoriesData =
+          updatedCategories?.data || updatedCategories?.items || [];
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       }
 
@@ -282,7 +366,7 @@ export function ClientExpenses({
         paymentMethod: formData.get("paymentMethod") as string,
         employeeId: formData.get("employeeId") as string,
         status: "completed",
-        reimbursable: false
+        reimbursable: false,
       };
 
       if (editingExpense) {
@@ -292,7 +376,7 @@ export function ClientExpenses({
         setIsEditDialogOpen(false);
       } else {
         // Create new expense
-        await api.post('/api/expenses', expenseData);
+        await api.post("/api/expenses", expenseData);
         toast.success("Expense added successfully");
         setIsAddDialogOpen(false);
       }
@@ -300,10 +384,11 @@ export function ClientExpenses({
       // Refresh all data
       await fetchData();
       resetForm();
-      
     } catch (error) {
-      console.error('Error submitting expense:', error);
-      toast.error(editingExpense ? 'Failed to update expense' : 'Failed to add expense');
+      console.error("Error submitting expense:", error);
+      toast.error(
+        editingExpense ? "Failed to update expense" : "Failed to add expense"
+      );
     }
   };
 
@@ -314,8 +399,8 @@ export function ClientExpenses({
         toast.success("Expense deleted successfully");
         await fetchData(); // Refresh all data
       } catch (error) {
-        console.error('Error deleting expense:', error);
-        toast.error('Failed to delete expense');
+        console.error("Error deleting expense:", error);
+        toast.error("Failed to delete expense");
       }
     }
   };
@@ -518,7 +603,7 @@ export function ClientExpenses({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-destructive">
-                ${stats?.lifetimeExpenses?.toLocaleString() || '0'}
+                ${stats?.lifetimeExpenses?.toLocaleString() || "0"}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Total all-time spending
@@ -533,11 +618,13 @@ export function ClientExpenses({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-chart-4">
-                ${stats?.thisMonthExpenses?.toLocaleString() || '0'}
+                ${stats?.thisMonthExpenses?.toLocaleString() || "0"}
               </div>
               <div
                 className={`flex items-center text-xs mt-1 ${
-                  (stats?.expenseGrowth || 0) <= 0 ? "text-accent" : "text-destructive"
+                  (stats?.expenseGrowth || 0) <= 0
+                    ? "text-accent"
+                    : "text-destructive"
                 }`}
               >
                 {(stats?.expenseGrowth || 0) >= 0 ? (
@@ -545,7 +632,8 @@ export function ClientExpenses({
                 ) : (
                   <ArrowDownRight className="mr-1 h-3 w-3" />
                 )}
-                {Math.abs(stats?.expenseGrowth || 0).toFixed(1)}% from last month
+                {Math.abs(stats?.expenseGrowth || 0).toFixed(1)}% from last
+                month
               </div>
             </CardContent>
           </Card>

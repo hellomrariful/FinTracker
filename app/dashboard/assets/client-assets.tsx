@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import {
   Card,
@@ -57,12 +57,12 @@ type Asset = {
   id: string;
   _id?: string;
   name: string;
-  category: 'physical' | 'digital';
+  category: "physical" | "digital";
   subCategory?: string;
   purchaseDate: string;
   purchasePrice: number;
   currentValue?: number;
-  condition: 'excellent' | 'good' | 'fair' | 'poor';
+  condition: "excellent" | "good" | "fair" | "poor";
   notes?: string;
   depreciationRate?: number;
   warrantyExpiry?: string;
@@ -89,19 +89,24 @@ export function ClientAssets({
   const fetchAssets = async () => {
     try {
       setIsLoading(true);
-      const result = await api.get<{ assets: any[], pagination?: any }>('/api/assets');
+      const result = await api
+        .get<{ assets: any[]; pagination?: any }>("/api/assets")
+        .catch((err) => {
+          console.error("Failed to fetch assets:", err);
+          return { assets: [] };
+        });
       // Map _id to id for consistency
       const assetsData = result?.assets || [];
-      const mappedAssets = Array.isArray(assetsData) 
+      const mappedAssets = Array.isArray(assetsData)
         ? assetsData.map((asset: any) => ({
             ...asset,
-            id: asset._id || asset.id
+            id: asset._id || asset.id,
           }))
         : [];
       setAssets(mappedAssets);
     } catch (error) {
-      console.error('Error fetching assets:', error);
-      toast.error('Failed to load assets');
+      console.error("Error fetching assets:", error);
+      toast.error("Failed to load assets");
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +128,10 @@ export function ClientAssets({
     0
   );
   const totalValue = totalPhysicalValue + totalDigitalValue;
-  const totalPurchaseValue = assets.reduce((sum, a) => sum + a.purchasePrice, 0);
+  const totalPurchaseValue = assets.reduce(
+    (sum, a) => sum + a.purchasePrice,
+    0
+  );
 
   // Filter assets based on search and tab
   const filteredAssets = assets.filter((asset) => {
@@ -150,32 +158,38 @@ export function ClientAssets({
         subCategory: (formData.get("subCategory") as string) || undefined,
         purchaseDate: formData.get("purchaseDate") as string,
         purchasePrice: parseFloat(formData.get("purchasePrice") as string),
-        currentValue: parseFloat(formData.get("currentValue") as string) || undefined,
-        condition: formData.get("condition") as "excellent" | "good" | "fair" | "poor",
+        currentValue:
+          parseFloat(formData.get("currentValue") as string) || undefined,
+        condition: formData.get("condition") as
+          | "excellent"
+          | "good"
+          | "fair"
+          | "poor",
         notes: (formData.get("notes") as string) || undefined,
       };
 
       if (editingAsset) {
         // Update existing asset
         await api.put(`/api/assets/${editingAsset.id}`, assetData);
-        
+
         toast.success("Asset updated successfully");
         setEditingAsset(null);
         setIsEditDialogOpen(false);
       } else {
         // Create new asset
-        await api.post('/api/assets', assetData);
-        
+        await api.post("/api/assets", assetData);
+
         toast.success("Asset added successfully");
         setIsAddDialogOpen(false);
       }
 
       await fetchAssets();
       (e.target as HTMLFormElement).reset();
-      
     } catch (error) {
-      console.error('Error submitting asset:', error);
-      toast.error(editingAsset ? 'Failed to update asset' : 'Failed to add asset');
+      console.error("Error submitting asset:", error);
+      toast.error(
+        editingAsset ? "Failed to update asset" : "Failed to add asset"
+      );
     }
   };
 
@@ -183,13 +197,12 @@ export function ClientAssets({
     if (confirm("Are you sure you want to delete this asset?")) {
       try {
         await api.delete(`/api/assets/${id}`);
-        
+
         toast.success("Asset deleted successfully");
         await fetchAssets();
-        
       } catch (error) {
-        console.error('Error deleting asset:', error);
-        toast.error('Failed to delete asset');
+        console.error("Error deleting asset:", error);
+        toast.error("Failed to delete asset");
       }
     }
   };

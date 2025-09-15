@@ -1,68 +1,72 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@/lib/auth/protected-route';
-import { connectDB } from '@/lib/db/mongoose';
-import Expense from '@/lib/models/Expense';
-import Employee from '@/lib/models/Employee';
+import { NextRequest } from "next/server";
+import { withAuth } from "@/lib/auth/protected-route";
+import * as apiResponse from "@/lib/api-response";
+import { connectDB } from "@/lib/db/mongoose";
+import Expense from "@/lib/models/Expense";
+import Employee from "@/lib/models/Employee";
+import mongoose from "mongoose";
 
-// GET employee spending statistics
-export const GET = withAuth(async (request: NextRequest, { auth }) => {
+// GET /api/employees/spending - Get employee spending data
+export const GET = withAuth(async (req: NextRequest, { auth }) => {
   try {
     await connectDB();
 
-    const { searchParams } = new URL(request.url);
-    const months = parseInt(searchParams.get('months') || '1');
-    
+    const { searchParams } = req.nextUrl;
+    const months = parseInt(searchParams.get("months") || "1");
+
     // Calculate date range
     const endDate = new Date();
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - months);
 
-    // Get all employees
-    const employees = await Employee.find({ userId: auth.user.userId }).lean();
-    
-    // Get expenses within date range
-    const expenses = await Expense.find({
-      userId: auth.user.userId,
-      date: {
-        $gte: startDate,
-        $lte: endDate
-      }
-    }).lean();
+    // Get expense data grouped by employee
+    const expensesByEmployee = await Expense.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(auth.user.userId),
+          date: { $gte: startDate, $lte: endDate },
+          status: { $in: ["completed", "reimbursement_pending"] },
+          employeeId: { $exists: true },
+        },
+      },
+      {
+        $group: {
+          _id: "$employeeId",
+          totalSpent: { $sum: "$amount" },
+          transactionCount: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "employees",
+          localField: "_id",
+          foreignField: "_id",
+          as: "employee",
+        },
+      },
+      {
+        $unwind: "$employee",
+      },
+      {
+        $project: {
+          id: "$_id",
+          name: "$employee.name",
+          role: "$employee.role",
+          avatar: "$employee.avatar",
+          totalSpent: 1,
+          transactionCount: 1,
+        },
+      },
+      {
+        $sort: { totalSpent: -1 },
+      },
+    ]);
 
-    // Calculate spending per employee
-    const employeeSpending = employees.map(employee => {
-      const employeeExpenses = expenses.filter(exp => 
-        exp.employeeId?.toString() === String(employee._id)
-      );
-      
-      const totalSpent = employeeExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-      
-      return {
-        id: employee._id,
-        name: employee.name,
-        role: employee.role,
-        avatar: employee.avatar,
-        totalSpent,
-        expenseCount: employeeExpenses.length
-      };
-    });
-
-    // Sort by total spent (descending)
-    employeeSpending.sort((a, b) => b.totalSpent - a.totalSpent);
-
-    return NextResponse.json({ 
-      success: true, 
-      data: employeeSpending,
-      dateRange: {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
-      }
+    return apiResponse.ok({
+      data: expensesByEmployee,
     });
   } catch (error) {
-    console.error('Error fetching employee spending:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch employee spending' },
-      { status: 500 }
-    );
+    console.error("Error fetching employee spending:", error);
+    return apiResponse.serverError("Failed to fetch employee spending");
   }
 });

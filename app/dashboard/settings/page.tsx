@@ -1,34 +1,63 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Settings, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import { useState } from "react";
+import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
+import { useAuth } from "@/lib/hooks/use-auth";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Settings,
+  Plus,
+  Edit,
+  Trash2,
   User,
   Building,
   Tag,
   Users,
   Bell,
-  Palette
-} from 'lucide-react';
-import { dataStore, type Employee, type Category } from '@/lib/data-store';
-import { toast } from 'sonner';
+  Palette,
+} from "lucide-react";
+import { dataStore, type Employee, type Category } from "@/lib/data-store";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
+  const { user, profile } = useAuth();
   const [employees, setEmployees] = useState(dataStore.getEmployees());
   const [categories, setCategories] = useState(dataStore.getCategories());
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
@@ -44,24 +73,24 @@ export default function SettingsPage() {
   const handleEmployeeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
     const employeeData = {
-      name: formData.get('name') as string,
-      role: formData.get('role') as string,
-      department: formData.get('department') as string,
-      hireDate: formData.get('hireDate') as string,
-      salary: parseFloat(formData.get('salary') as string) || 0,
-      performance: parseFloat(formData.get('performance') as string) || 0,
-      avatar: formData.get('avatar') as string || undefined,
+      name: formData.get("name") as string,
+      role: formData.get("role") as string,
+      department: formData.get("department") as string,
+      hireDate: formData.get("hireDate") as string,
+      salary: parseFloat(formData.get("salary") as string) || 0,
+      performance: parseFloat(formData.get("performance") as string) || 0,
+      avatar: (formData.get("avatar") as string) || undefined,
     };
 
     if (editingEmployee) {
       dataStore.updateEmployee(editingEmployee.id, employeeData);
-      toast.success('Employee updated successfully');
+      toast.success("Employee updated successfully");
       setEditingEmployee(null);
     } else {
       dataStore.addEmployee(employeeData);
-      toast.success('Employee added successfully');
+      toast.success("Employee added successfully");
       setIsAddEmployeeDialogOpen(false);
     }
 
@@ -72,19 +101,19 @@ export default function SettingsPage() {
   const handleCategorySubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
     const categoryData = {
-      name: formData.get('name') as string,
-      type: formData.get('type') as 'income' | 'expense',
+      name: formData.get("name") as string,
+      type: formData.get("type") as "income" | "expense",
     };
 
     if (editingCategory) {
       dataStore.updateCategory(editingCategory.id, categoryData);
-      toast.success('Category updated successfully');
+      toast.success("Category updated successfully");
       setEditingCategory(null);
     } else {
       dataStore.addCategory(categoryData);
-      toast.success('Category added successfully');
+      toast.success("Category added successfully");
       setIsAddCategoryDialogOpen(false);
     }
 
@@ -93,18 +122,18 @@ export default function SettingsPage() {
   };
 
   const handleDeleteEmployee = (id: string) => {
-    if (confirm('Are you sure you want to delete this employee?')) {
+    if (confirm("Are you sure you want to delete this employee?")) {
       dataStore.deleteEmployee(id);
       setEmployees(dataStore.getEmployees());
-      toast.success('Employee deleted successfully');
+      toast.success("Employee deleted successfully");
     }
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (confirm('Are you sure you want to delete this category?')) {
+    if (confirm("Are you sure you want to delete this category?")) {
       dataStore.deleteCategory(id);
       setCategories(dataStore.getCategories());
-      toast.success('Category deleted successfully');
+      toast.success("Category deleted successfully");
     }
   };
 
@@ -150,7 +179,9 @@ export default function SettingsPage() {
             id="hireDate"
             name="hireDate"
             type="date"
-            defaultValue={employee?.hireDate || new Date().toISOString().split('T')[0]}
+            defaultValue={
+              employee?.hireDate || new Date().toISOString().split("T")[0]
+            }
             required
           />
         </div>
@@ -196,7 +227,7 @@ export default function SettingsPage() {
 
       <DialogFooter>
         <Button type="submit">
-          {employee ? 'Update Employee' : 'Add Employee'}
+          {employee ? "Update Employee" : "Add Employee"}
         </Button>
       </DialogFooter>
     </form>
@@ -230,7 +261,7 @@ export default function SettingsPage() {
 
       <DialogFooter>
         <Button type="submit">
-          {category ? 'Update Category' : 'Add Category'}
+          {category ? "Update Category" : "Add Category"}
         </Button>
       </DialogFooter>
     </form>
@@ -242,7 +273,9 @@ export default function SettingsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Settings</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Settings
+            </h1>
             <p className="mt-2 text-muted-foreground">
               Manage your account preferences and application settings.
             </p>
@@ -297,12 +330,20 @@ export default function SettingsPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue="demo@fintracker.com" />
+                  <Input
+                    id="email"
+                    type="email"
+                    defaultValue={profile?.email || user?.email || ""}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    defaultValue="+1 (555) 123-4567"
+                  />
                 </div>
 
                 <Button>Save Changes</Button>
@@ -325,7 +366,10 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="businessName">Business Name</Label>
-                  <Input id="businessName" defaultValue="Fintracker Demo Company" />
+                  <Input
+                    id="businessName"
+                    defaultValue="Fintracker Demo Company"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -361,7 +405,10 @@ export default function SettingsPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="address">Business Address</Label>
-                  <Input id="address" defaultValue="123 Business St, City, State 12345" />
+                  <Input
+                    id="address"
+                    defaultValue="123 Business St, City, State 12345"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -387,7 +434,10 @@ export default function SettingsPage() {
                     Manage your team members and their roles.
                   </CardDescription>
                 </div>
-                <Dialog open={isAddEmployeeDialogOpen} onOpenChange={setIsAddEmployeeDialogOpen}>
+                <Dialog
+                  open={isAddEmployeeDialogOpen}
+                  onOpenChange={setIsAddEmployeeDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button>
                       <Plus className="mr-2 h-4 w-4" />
@@ -425,15 +475,22 @@ export default function SettingsPage() {
                               <Avatar className="h-8 w-8">
                                 <AvatarImage src={employee.avatar} />
                                 <AvatarFallback>
-                                  {employee.name.split(' ').map(n => n[0]).join('')}
+                                  {employee.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="font-medium">{employee.name}</span>
+                              <span className="font-medium">
+                                {employee.name}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell>{employee.role}</TableCell>
                           <TableCell>{employee.department}</TableCell>
-                          <TableCell>${employee.salary.toLocaleString()}</TableCell>
+                          <TableCell>
+                            ${employee.salary.toLocaleString()}
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
                               <Dialog>
@@ -453,13 +510,17 @@ export default function SettingsPage() {
                                       Update employee information.
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <EmployeeForm employee={editingEmployee || undefined} />
+                                  <EmployeeForm
+                                    employee={editingEmployee || undefined}
+                                  />
                                 </DialogContent>
                               </Dialog>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleDeleteEmployee(employee.id)}
+                                onClick={() =>
+                                  handleDeleteEmployee(employee.id)
+                                }
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -487,7 +548,10 @@ export default function SettingsPage() {
                     Manage income and expense categories.
                   </CardDescription>
                 </div>
-                <Dialog open={isAddCategoryDialogOpen} onOpenChange={setIsAddCategoryDialogOpen}>
+                <Dialog
+                  open={isAddCategoryDialogOpen}
+                  onOpenChange={setIsAddCategoryDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button>
                       <Plus className="mr-2 h-4 w-4" />
@@ -518,10 +582,20 @@ export default function SettingsPage() {
                     <TableBody>
                       {categories.map((category) => (
                         <TableRow key={category.id}>
-                          <TableCell className="font-medium">{category.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {category.name}
+                          </TableCell>
                           <TableCell>
-                            <Badge variant={category.type === 'income' ? 'default' : 'destructive'}>
-                              {category.type === 'income' ? 'Income' : 'Expense'}
+                            <Badge
+                              variant={
+                                category.type === "income"
+                                  ? "default"
+                                  : "destructive"
+                              }
+                            >
+                              {category.type === "income"
+                                ? "Income"
+                                : "Expense"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
@@ -543,13 +617,17 @@ export default function SettingsPage() {
                                       Update category information.
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <CategoryForm category={editingCategory || undefined} />
+                                  <CategoryForm
+                                    category={editingCategory || undefined}
+                                  />
                                 </DialogContent>
                               </Dialog>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleDeleteCategory(category.id)}
+                                onClick={() =>
+                                  handleDeleteCategory(category.id)
+                                }
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -607,7 +685,10 @@ export default function SettingsPage() {
                       Receive notifications in your browser
                     </p>
                   </div>
-                  <Switch checked={notifications} onCheckedChange={setNotifications} />
+                  <Switch
+                    checked={notifications}
+                    onCheckedChange={setNotifications}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -617,7 +698,10 @@ export default function SettingsPage() {
                       Receive notifications via email
                     </p>
                   </div>
-                  <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+                  <Switch
+                    checked={emailNotifications}
+                    onCheckedChange={setEmailNotifications}
+                  />
                 </div>
               </CardContent>
             </Card>

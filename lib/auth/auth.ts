@@ -1,6 +1,6 @@
 import { User, AuthError, AuthResponse, UserProfile } from "@/lib/types/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_APP_URL || "";
 
 export async function signUp(data: {
   email: string;
@@ -11,12 +11,12 @@ export async function signUp(data: {
 }): Promise<AuthResponse> {
   try {
     const response = await fetch(`${API_URL}/api/auth/signup`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
-      credentials: 'include',
+      credentials: "include",
     });
 
     const result = await response.json();
@@ -24,7 +24,7 @@ export async function signUp(data: {
     if (!response.ok) {
       return {
         user: null,
-        error: { message: result.error || 'Signup failed' },
+        error: { message: result.error || "Signup failed" },
       };
     }
 
@@ -42,7 +42,7 @@ export async function signUp(data: {
     return {
       user: null,
       error: {
-        message: error instanceof Error ? error.message : 'Network error',
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }
@@ -54,12 +54,12 @@ export async function signIn(
 ): Promise<AuthResponse> {
   try {
     const response = await fetch(`${API_URL}/api/auth/signin`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password }),
-      credentials: 'include',
+      credentials: "include",
     });
 
     const result = await response.json();
@@ -67,7 +67,7 @@ export async function signIn(
     if (!response.ok) {
       return {
         user: null,
-        error: { message: result.error || 'Signin failed' },
+        error: { message: result.error || "Signin failed" },
       };
     }
 
@@ -85,7 +85,7 @@ export async function signIn(
     return {
       user: null,
       error: {
-        message: error instanceof Error ? error.message : 'Network error',
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }
@@ -94,20 +94,20 @@ export async function signIn(
 export async function signOut(): Promise<{ error: AuthError | null }> {
   try {
     const response = await fetch(`${API_URL}/api/auth/signout`, {
-      method: 'POST',
-      credentials: 'include',
+      method: "POST",
+      credentials: "include",
     });
 
     if (!response.ok) {
       const result = await response.json();
-      return { error: { message: result.error || 'Signout failed' } };
+      return { error: { message: result.error || "Signout failed" } };
     }
 
     return { error: null };
   } catch (error) {
     return {
       error: {
-        message: error instanceof Error ? error.message : 'Network error',
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }
@@ -116,8 +116,8 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const response = await fetch(`${API_URL}/api/auth/me`, {
-      method: 'GET',
-      credentials: 'include',
+      method: "GET",
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -133,7 +133,7 @@ export async function getCurrentUser(): Promise<User | null> {
       created_at: result.user.createdAt,
     };
   } catch (error) {
-    console.error('Error getting current user:', error);
+    console.error("Error getting current user:", error);
     return null;
   }
 }
@@ -143,13 +143,16 @@ export async function getUserProfile(
 ): Promise<{ data: UserProfile | null; error: AuthError | null }> {
   try {
     const response = await fetch(`${API_URL}/api/auth/me`, {
-      method: 'GET',
-      credentials: 'include',
+      method: "GET",
+      credentials: "include",
     });
 
     if (!response.ok) {
       const result = await response.json().catch(() => ({}));
-      return { data: null, error: { message: result.error || 'Failed to get profile' } };
+      return {
+        data: null,
+        error: { message: result.error || "Failed to get profile" },
+      };
     }
 
     const result = await response.json();
@@ -170,7 +173,7 @@ export async function getUserProfile(
     return {
       data: null,
       error: {
-        message: error instanceof Error ? error.message : 'Network error',
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }
@@ -198,7 +201,7 @@ export async function updateUserProfile(
     return {
       data: null,
       error: {
-        message: error instanceof Error ? error.message : 'Network error',
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }

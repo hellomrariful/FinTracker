@@ -14,18 +14,32 @@ import { signIn } from "@/lib/auth/auth";
 export function SigninForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
+
+  const handleDemoLogin = () => {
+    setEmail("demo@fintracker.io");
+    setPassword("demo1234");
+    // Auto-submit after setting values
+    setTimeout(() => {
+      const form = document.getElementById("signin-form") as HTMLFormElement;
+      if (form) {
+        form.requestSubmit();
+      }
+    }, 100);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const emailValue = formData.get("email") as string;
+    const passwordValue = formData.get("password") as string;
 
     try {
-      const { user, error } = await signIn(email, password);
+      const { user, error } = await signIn(emailValue, passwordValue);
 
       if (error) {
         toast.error(error.message);
@@ -45,7 +59,6 @@ export function SigninForm() {
     }
   };
 
-
   return (
     <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
       <div className="text-center">
@@ -60,8 +73,30 @@ export function SigninForm() {
         </p>
       </div>
 
+      {/* Demo User Card */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-blue-900">
+              Try Demo Account
+            </h3>
+            <p className="text-xs text-blue-700 mt-1">
+              demo@fintracker.io • demo1234
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDemoLogin}
+            className="text-blue-700 border-blue-300 hover:bg-blue-100"
+          >
+            Use Demo
+          </Button>
+        </div>
+      </div>
 
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+      <form id="signin-form" className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div>
             <Label htmlFor="email">Email address</Label>
@@ -73,6 +108,8 @@ export function SigninForm() {
               required
               className="mt-1"
               placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div>
@@ -86,6 +123,8 @@ export function SigninForm() {
                 required
                 className="pr-10"
                 placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
               <button
                 type="button"

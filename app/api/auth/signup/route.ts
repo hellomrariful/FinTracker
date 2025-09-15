@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import connectDB from '@/lib/db/mongodb';
-import User from '@/lib/models/User';
-import { sendVerificationEmail } from '@/lib/auth/email';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import connectDB from "@/lib/db/mongodb";
+import User from "@/lib/models/User";
+import { sendVerificationEmail } from "@/lib/auth/email";
 
 // Validation schema
 const signupSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   company: z.string().optional(),
 });
 
@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Check if user already exists
-    const existingUser = await User.findOne({ 
-      email: validatedData.email.toLowerCase() 
+    const existingUser = await User.findOne({
+      email: validatedData.email.toLowerCase(),
     });
 
     if (existingUser) {
@@ -32,25 +32,26 @@ export async function POST(request: NextRequest) {
         // User exists but not verified, resend verification email
         const token = existingUser.generateEmailVerificationToken();
         await existingUser.save();
-        
+
         try {
           await sendVerificationEmail(existingUser, token);
           return NextResponse.json({
-            message: 'An account with this email already exists. We have resent the verification email.',
+            message:
+              "An account with this email already exists. We have resent the verification email.",
             requiresVerification: true,
             email: existingUser.email,
           });
         } catch (emailError) {
-          console.error('Failed to resend verification email:', emailError);
+          console.error("Failed to resend verification email:", emailError);
           return NextResponse.json(
-            { error: 'Failed to resend verification email. Please try again.' },
+            { error: "Failed to resend verification email. Please try again." },
             { status: 500 }
           );
         }
       }
-      
+
       return NextResponse.json(
-        { error: 'An account with this email already exists' },
+        { error: "An account with this email already exists" },
         { status: 409 }
       );
     }
@@ -62,25 +63,25 @@ export async function POST(request: NextRequest) {
       firstName: validatedData.firstName,
       lastName: validatedData.lastName,
       company: validatedData.company,
-      role: 'member', // Default role for new users
-      isEmailVerified: false,
+      role: "member", // Default role for new users
+      isEmailVerified: true, // Skip email verification for now
       isActive: true,
     });
 
-    // Generate email verification token
-    const verificationToken = newUser.generateEmailVerificationToken();
-    
     // Save the user
     await newUser.save();
 
+    // Skip email verification for now
+    // Generate email verification token
+    // const verificationToken = newUser.generateEmailVerificationToken();
     // Send verification email
-    try {
-      await sendVerificationEmail(newUser, verificationToken);
-      console.log('Verification email sent to:', newUser.email);
-    } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
-      // Don't fail the signup if email fails, user can request resend
-    }
+    // try {
+    //   await sendVerificationEmail(newUser, verificationToken);
+    //   console.log('Verification email sent to:', newUser.email);
+    // } catch (emailError) {
+    //   console.error('Failed to send verification email:', emailError);
+    //   // Don't fail the signup if email fails, user can request resend
+    // }
 
     // Return success response
     return NextResponse.json({
@@ -93,22 +94,21 @@ export async function POST(request: NextRequest) {
         role: newUser.role,
         isEmailVerified: newUser.isEmailVerified,
       },
-      message: 'Account created successfully! Please check your email to verify your account.',
-      requiresVerification: true,
+      message: "Account created successfully! You can now sign in.",
+      requiresVerification: false,
     });
-
   } catch (error) {
-    console.error('Signup error:', error);
-    
+    console.error("Signup error:", error);
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: "Validation error", details: error.errors },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

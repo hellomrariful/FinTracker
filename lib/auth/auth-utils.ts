@@ -1,10 +1,10 @@
-import { NextRequest } from 'next/server';
-import { SignJWT, jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
-import { config } from '@/lib/config/env';
-import { AuthenticationError, AuthorizationError } from '@/lib/errors';
-import User, { IUser } from '@/lib/models/User';
-import { connectDB } from '@/lib/db/mongoose';
+import { NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
+import { config } from "@/lib/config/env";
+import { AuthenticationError, AuthorizationError } from "@/lib/errors";
+import User, { IUser } from "@/lib/models/User";
+import { connectDB } from "@/lib/db/mongoose";
 
 /**
  * JWT payload interface
@@ -12,8 +12,8 @@ import { connectDB } from '@/lib/db/mongoose';
 export interface JWTPayload {
   userId: string;
   email: string;
-  role: 'owner' | 'admin' | 'member' | 'viewer';
-  sessionId?: string;
+  role: "owner" | "admin" | "member" | "viewer";
+  type?: string;
   iat?: number;
   exp?: number;
 }
@@ -27,115 +27,27 @@ export interface AuthContext {
 }
 
 /**
- * Token types
- */
-export enum TokenType {
-  ACCESS = 'access',
-  REFRESH = 'refresh',
-  EMAIL_VERIFICATION = 'email_verification',
-  PASSWORD_RESET = 'password_reset',
-}
-
-/**
- * Get JWT secret for token type
- */
-function getSecret(type: TokenType): Uint8Array {
-  const secrets = {
-    [TokenType.ACCESS]: config.auth.jwtAccessSecret,
-    [TokenType.REFRESH]: config.auth.jwtRefreshSecret,
-    [TokenType.EMAIL_VERIFICATION]: config.auth.jwtAccessSecret,
-    [TokenType.PASSWORD_RESET]: config.auth.jwtAccessSecret,
-  };
-
-  const secret = secrets[type];
-  if (!secret) {
-    throw new Error(`Secret not configured for token type: ${type}`);
-  }
-
-  return new TextEncoder().encode(secret);
-}
-
-/**
- * Generate JWT token
- */
-export async function generateToken(
-  payload: Omit<JWTPayload, 'iat' | 'exp'>,
-  type: TokenType = TokenType.ACCESS,
-  expiresIn = '1h'
-): Promise<string> {
-  const secret = getSecret(type);
-  
-  const jwt = await new SignJWT({ ...payload, type })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(secret);
-
-  return jwt;
-}
-
-/**
- * Verify JWT token
- */
-export async function verifyToken(
-  token: string,
-  type: TokenType = TokenType.ACCESS
-): Promise<JWTPayload> {
-  try {
-    const secret = getSecret(type);
-    const { payload } = await jwtVerify(token, secret);
-    
-    // Validate token type (support legacy tokens without a `type` claim as ACCESS)
-    const payloadAny = payload as any;
-    if (payloadAny.type && payloadAny.type !== type) {
-      throw new AuthenticationError('Invalid token type');
-    }
-    
-    // For legacy tokens that do not include a `type` claim, assume ACCESS by default
-    if (!payloadAny.type && type !== TokenType.ACCESS) {
-      throw new AuthenticationError('Invalid token type');
-    }
-    
-    return payload as unknown as JWTPayload;
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('expired')) {
-        throw new AuthenticationError('Token has expired');
-      }
-      if (error.message.includes('signature')) {
-        throw new AuthenticationError('Invalid token signature');
-      }
-    }
-    throw new AuthenticationError('Invalid token');
-  }
-}
-
-/**
  * Extract token from request
  */
-export async function extractToken(request: NextRequest): Promise<string | null> {
+export async function extractToken(
+  request: NextRequest
+): Promise<string | null> {
   // Check Authorization header
-  const authHeader = request.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
     return authHeader.substring(7);
   }
 
-  // Check X-API-Key header (for API key auth)
-  const apiKey = request.headers.get('x-api-key');
-  if (apiKey) {
-    return apiKey;
-  }
-
-  // Check cookies - try both access-token and the configured session cookie name
+  // Check cookies
   const cookieStore = await cookies();
-  
-  // First try the access-token cookie (used by signin/signout)
-  const accessTokenCookie = cookieStore.get('access-token');
+
+  // Try access-token cookie first
+  const accessTokenCookie = cookieStore.get("access-token");
   if (accessTokenCookie) {
     return accessTokenCookie.value;
   }
-  
-  // Fallback to configured session cookie name for backwards compatibility
+
+  // Fallback to configured session cookie name
   const sessionCookie = cookieStore.get(config.auth.sessionCookieName);
   if (sessionCookie) {
     return sessionCookie.value;
@@ -145,17 +57,46 @@ export async function extractToken(request: NextRequest): Promise<string | null>
 }
 
 /**
+ * Verify JWT token using jsonwebtoken library
+ */
+export function verifyToken(token: string): JWTPayload {
+  try {
+    const secret = config.auth.jwtAccessSecret;
+    const payload = jwt.verify(token, secret) as any;
+
+    return {
+      userId: payload.userId,
+      email: payload.email || "",
+      role: payload.role || "member",
+      type: payload.type,
+      iat: payload.iat,
+      exp: payload.exp,
+    } as JWTPayload;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes("expired")) {
+        throw new AuthenticationError("Token has expired");
+      }
+      if (error.message.includes("signature")) {
+        throw new AuthenticationError("Invalid token signature");
+      }
+    }
+    throw new AuthenticationError("Invalid token");
+  }
+}
+
+/**
  * Get authenticated user from request
  */
 export async function getAuth(request: NextRequest): Promise<AuthContext> {
   const token = await extractToken(request);
-  
+
   if (!token) {
-    throw new AuthenticationError('No authentication token provided');
+    throw new AuthenticationError("No authentication token provided");
   }
 
-  const payload = await verifyToken(token);
-  
+  const payload = verifyToken(token);
+
   return {
     user: payload,
     token,
@@ -163,26 +104,12 @@ export async function getAuth(request: NextRequest): Promise<AuthContext> {
 }
 
 /**
- * Get authenticated user from request (safe version)
- */
-export async function getAuthSafe(request: NextRequest): Promise<AuthContext | null> {
-  try {
-    return await getAuth(request);
-  } catch (error) {
-    return null;
-  }
-}
-
-/**
  * Verify user has required role
  */
-export function requireRole(
-  userRole: string,
-  requiredRoles: string[]
-): void {
+export function requireRole(userRole: string, requiredRoles: string[]): void {
   if (!requiredRoles.includes(userRole)) {
     throw new AuthorizationError(
-      `Insufficient permissions. Required role: ${requiredRoles.join(' or ')}`
+      `Insufficient permissions. Required role: ${requiredRoles.join(" or ")}`
     );
   }
 }
@@ -196,122 +123,12 @@ export function canAccessResource(
   userRole: string
 ): boolean {
   // Owners and admins can access any resource
-  if (userRole === 'owner' || userRole === 'admin') {
+  if (userRole === "owner" || userRole === "admin") {
     return true;
   }
-  
+
   // Others can only access their own resources
   return userId === resourceOwnerId;
-}
-
-/**
- * Get user by ID from database
- */
-export async function getUserById(userId: string): Promise<IUser | null> {
-  await connectDB();
-  return User.findById(userId).select('-password');
-}
-
-/**
- * Create session tokens for user
- */
-export async function createSessionTokens(user: IUser): Promise<{
-  accessToken: string;
-  refreshToken: string;
-}> {
-  const payload: Omit<JWTPayload, 'iat' | 'exp'> = {
-    userId: user._id.toString(),
-    email: user.email,
-    role: user.role,
-    sessionId: crypto.randomUUID(),
-  };
-
-  const [accessToken, refreshToken] = await Promise.all([
-    generateToken(payload, TokenType.ACCESS, '1h'),
-    generateToken(payload, TokenType.REFRESH, '7d'),
-  ]);
-
-  return { accessToken, refreshToken };
-}
-
-/**
- * Set auth cookies
- */
-export async function setAuthCookies(
-  accessToken: string,
-  refreshToken?: string
-): Promise<void> {
-  const cookieStore = await cookies();
-  
-  // Set access token cookie
-  cookieStore.set(config.auth.sessionCookieName, accessToken, {
-    httpOnly: true,
-    secure: config.app.env === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60, // 1 hour
-    path: '/',
-  });
-
-  // Set refresh token cookie if provided
-  if (refreshToken) {
-    cookieStore.set(`${config.auth.sessionCookieName}-refresh`, refreshToken, {
-      httpOnly: true,
-      secure: config.app.env === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: '/',
-    });
-  }
-}
-
-/**
- * Clear auth cookies
- */
-export async function clearAuthCookies(): Promise<void> {
-  const cookieStore = await cookies();
-  
-  cookieStore.delete(config.auth.sessionCookieName);
-  cookieStore.delete(`${config.auth.sessionCookieName}-refresh`);
-}
-
-/**
- * Validate password strength
- */
-export function validatePassword(password: string): {
-  valid: boolean;
-  errors: string[];
-} {
-  const errors: string[] = [];
-
-  if (password.length < 8) {
-    errors.push('Password must be at least 8 characters long');
-  }
-
-  if (!/[A-Z]/.test(password)) {
-    errors.push('Password must contain at least one uppercase letter');
-  }
-
-  if (!/[a-z]/.test(password)) {
-    errors.push('Password must contain at least one lowercase letter');
-  }
-
-  if (!/\d/.test(password)) {
-    errors.push('Password must contain at least one number');
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
-}
-
-/**
- * Generate secure random token
- */
-export function generateSecureToken(length = 32): string {
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**

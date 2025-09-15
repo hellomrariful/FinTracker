@@ -42,8 +42,8 @@ export function SignupForm() {
       }
 
       if (user) {
-        toast.success("Account created successfully! Please check your email to verify your account.");
-        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+        toast.success("Account created successfully! You can now sign in.");
+        router.push("/auth/signin");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -65,7 +65,6 @@ export function SignupForm() {
           Start your 30-day free trial today
         </p>
       </div>
-
 
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-4">

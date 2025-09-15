@@ -1,6 +1,6 @@
 /**
  * API Client with automatic authentication handling
- * 
+ *
  * This client ensures that:
  * - Authentication cookies are always included in requests
  * - Proper headers are set for JSON requests
@@ -12,17 +12,17 @@ export type FetchOptions = RequestInit & {
 };
 
 // Since API is on the same origin in development, we can use relative URLs
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 /**
  * Get a cookie value by name
  */
 function getCookie(name: string): string | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) {
-    return parts.pop()?.split(';').shift() || null;
+    return parts.pop()?.split(";").shift() || null;
   }
   return null;
 }
@@ -31,16 +31,16 @@ function getCookie(name: string): string | null {
  * Construct the full URL for a given path
  */
 function withBase(input: string | URL): string {
-  const path = typeof input === 'string' ? input : input.toString();
-  
+  const path = typeof input === "string" ? input : input.toString();
+
   // If it's already a full URL, return as-is
-  if (path.startsWith('http://') || path.startsWith('https://')) {
+  if (path.startsWith("http://") || path.startsWith("https://")) {
     return path;
   }
-  
+
   // For relative paths, ensure they start with /
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
   // In development, we can use relative URLs since Next.js API is on same origin
   return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath;
 }
@@ -54,26 +54,30 @@ export async function apiFetch(
 ): Promise<Response> {
   const url = withBase(input);
   const headers = new Headers(init.headers || {});
-  
+
   // Set default headers
-  if (!headers.has('Accept')) {
-    headers.set('Accept', 'application/json');
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json");
   }
-  
+
   // Only set Content-Type for JSON bodies
   const hasBody = !!init.body;
-  if (hasBody && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
+  if (
+    hasBody &&
+    !(init.body instanceof FormData) &&
+    !headers.has("Content-Type")
+  ) {
+    headers.set("Content-Type", "application/json");
   }
-  
+
   // Include credentials (cookies) with the request
   const response = await fetch(url, {
     ...init,
     headers,
-    credentials: 'include', // This is the key - ensures cookies are sent
-    mode: 'cors',
+    credentials: "include", // This is the key - ensures cookies are sent
+    mode: "cors",
   });
-  
+
   return response;
 }
 
@@ -82,7 +86,7 @@ export async function apiFetch(
  */
 export async function parseJSON<T>(response: Response): Promise<T> {
   const text = await response.text();
-  
+
   // Handle empty responses
   if (!text) {
     if (!response.ok) {
@@ -90,7 +94,7 @@ export async function parseJSON<T>(response: Response): Promise<T> {
     }
     return {} as T;
   }
-  
+
   // Parse JSON
   let data;
   try {
@@ -98,7 +102,7 @@ export async function parseJSON<T>(response: Response): Promise<T> {
   } catch (e) {
     throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
   }
-  
+
   // Handle error responses
   if (!response.ok) {
     const message = data?.message || data?.error || `HTTP ${response.status}`;
@@ -107,7 +111,7 @@ export async function parseJSON<T>(response: Response): Promise<T> {
     (error as any).data = data;
     throw error;
   }
-  
+
   return data as T;
 }
 
@@ -119,15 +123,15 @@ export const api = {
    * Raw fetch with authentication
    */
   fetch: apiFetch,
-  
+
   /**
    * GET request
    */
   get: async <T = unknown>(path: string, init?: FetchOptions): Promise<T> => {
-    const response = await apiFetch(path, { ...init, method: 'GET' });
+    const response = await apiFetch(path, { ...init, method: "GET" });
     return parseJSON<T>(response);
   },
-  
+
   /**
    * POST request
    */
@@ -138,12 +142,12 @@ export const api = {
   ): Promise<T> => {
     const response = await apiFetch(path, {
       ...init,
-      method: 'POST',
+      method: "POST",
       body: body instanceof FormData ? body : JSON.stringify(body),
     });
     return parseJSON<T>(response);
   },
-  
+
   /**
    * PUT request
    */
@@ -154,12 +158,12 @@ export const api = {
   ): Promise<T> => {
     const response = await apiFetch(path, {
       ...init,
-      method: 'PUT',
+      method: "PUT",
       body: body instanceof FormData ? body : JSON.stringify(body),
     });
     return parseJSON<T>(response);
   },
-  
+
   /**
    * PATCH request
    */
@@ -170,17 +174,20 @@ export const api = {
   ): Promise<T> => {
     const response = await apiFetch(path, {
       ...init,
-      method: 'PATCH',
+      method: "PATCH",
       body: body instanceof FormData ? body : JSON.stringify(body),
     });
     return parseJSON<T>(response);
   },
-  
+
   /**
    * DELETE request
    */
-  delete: async <T = unknown>(path: string, init?: FetchOptions): Promise<T> => {
-    const response = await apiFetch(path, { ...init, method: 'DELETE' });
+  delete: async <T = unknown>(
+    path: string,
+    init?: FetchOptions
+  ): Promise<T> => {
+    const response = await apiFetch(path, { ...init, method: "DELETE" });
     return parseJSON<T>(response);
   },
 };

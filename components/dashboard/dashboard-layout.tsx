@@ -1,42 +1,46 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { 
-  BarChart3, 
-  Menu, 
-  X, 
-  Home, 
-  CreditCard, 
-  DollarSign, 
-  PieChart, 
-  Package, 
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import {
+  BarChart3,
+  Menu,
+  X,
+  Home,
+  CreditCard,
+  DollarSign,
+  PieChart,
+  Package,
   Settings,
   Bell,
   User,
-  Plus
-} from 'lucide-react';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+  Plus,
+  LogOut,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/lib/hooks/use-auth";
+import { signOut } from "@/lib/auth/auth";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Income', href: '/dashboard/income', icon: DollarSign },
-  { name: 'Expenses', href: '/dashboard/expenses', icon: CreditCard },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: PieChart },
-  { name: 'Assets', href: '/dashboard/assets', icon: Package },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Income", href: "/dashboard/income", icon: DollarSign },
+  { name: "Expenses", href: "/dashboard/expenses", icon: CreditCard },
+  { name: "Analytics", href: "/dashboard/analytics", icon: PieChart },
+  { name: "Assets", href: "/dashboard/assets", icon: Package },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 interface DashboardLayoutProps {
@@ -46,15 +50,61 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, profile, loading } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+      router.push("/auth/signin");
+    } catch (error) {
+      toast.error("Failed to sign out");
+    }
+  };
+
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (profile?.name) {
+      return profile.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase();
+    }
+    if (user?.name) {
+      return user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase();
+    }
+    return "U";
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    return profile?.name || user?.name || "User";
+  };
+
+  // Get display email
+  const getDisplayEmail = () => {
+    return profile?.email || user?.email || "";
+  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile sidebar */}
-      <div className={cn(
-        "relative z-50 lg:hidden",
-        sidebarOpen ? "fixed inset-0" : "hidden"
-      )}>
-        <div className="fixed inset-0 bg-gray-900/80" onClick={() => setSidebarOpen(false)} />
+      <div
+        className={cn(
+          "relative z-50 lg:hidden",
+          sidebarOpen ? "fixed inset-0" : "hidden"
+        )}
+      >
+        <div
+          className="fixed inset-0 bg-gray-900/80"
+          onClick={() => setSidebarOpen(false)}
+        />
         <div className="fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-background px-6 pb-4">
           <div className="flex h-16 shrink-0 items-center justify-between">
             <Link href="/dashboard" className="flex items-center space-x-2">
@@ -78,13 +128,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Link
                     href={item.href}
                     className={cn(
-                      'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors',
+                      "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors",
                       pathname === item.href
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     )}
                   >
-                    <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                    <item.icon
+                      className="h-6 w-6 shrink-0"
+                      aria-hidden="true"
+                    />
                     {item.name}
                   </Link>
                 </li>
@@ -114,13 +167,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Link
                         href={item.href}
                         className={cn(
-                          'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors',
+                          "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors",
                           pathname === item.href
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
                         )}
                       >
-                        <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                        <item.icon
+                          className="h-6 w-6 shrink-0"
+                          aria-hidden="true"
+                        />
                         {item.name}
                       </Link>
                     </li>
@@ -148,7 +204,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="h-6 w-px bg-border lg:hidden" aria-hidden="true" />
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            
             {/* Right side items */}
             <div className="flex flex-1 items-center justify-end gap-x-4 lg:gap-x-6">
               <ThemeToggle />
@@ -162,24 +217,35 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </Button>
 
               {/* Separator */}
-              <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-border" aria-hidden="true" />
+              <div
+                className="hidden lg:block lg:h-6 lg:w-px lg:bg-border"
+                aria-hidden="true"
+              />
 
               {/* Profile dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                  >
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop&crop=face" alt="Profile" />
-                      <AvatarFallback>JD</AvatarFallback>
+                      <AvatarImage
+                        src={profile?.avatar || user?.avatar}
+                        alt="Profile"
+                      />
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">John Doe</p>
+                      <p className="text-sm font-medium leading-none">
+                        {getDisplayName()}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        demo@fintracker.com
+                        {getDisplayEmail()}
                       </p>
                     </div>
                   </DropdownMenuLabel>
@@ -197,10 +263,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/auth/signin">
-                      <span>Log out</span>
-                    </Link>
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -210,9 +275,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Page content */}
         <main className="py-8">
-          <div className="px-4 sm:px-6 lg:px-8">
-            {children}
-          </div>
+          <div className="px-4 sm:px-6 lg:px-8">{children}</div>
         </main>
       </div>
     </div>
