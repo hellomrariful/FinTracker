@@ -11,24 +11,8 @@ import {
   Users,
   BarChart3,
   PieChart,
-  Calendar,
   Target,
 } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart as RechartsPieChart,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 
 export const metadata: Metadata = {
   title: "Demo Dashboard | FinTracker",
@@ -95,8 +79,8 @@ export default function DemoPage() {
             <h2 className="font-semibold text-primary">Interactive Demo</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            This is a live preview of FinTracker's dashboard with sample data.
-            Experience the real interface and features before signing up.
+            This is a live preview of FinTracker&apos;s dashboard with sample
+            data. Experience the real interface and features before signing up.
           </p>
         </div>
 
@@ -181,32 +165,27 @@ export default function DemoPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value) => [`$${value.toLocaleString()}`, ""]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stackId="1"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
-                    fillOpacity={0.6}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="expenses"
-                    stackId="2"
-                    stroke="#ef4444"
-                    fill="#ef4444"
-                    fillOpacity={0.6}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div className="h-[300px] flex items-center justify-center bg-muted rounded-lg">
+                <div className="text-center">
+                  <BarChart3 className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Revenue vs Expenses chart will be displayed here
+                  </p>
+                  <div className="mt-4 space-y-2">
+                    {revenueData.slice(0, 3).map((data, index) => (
+                      <div key={index} className="flex justify-between text-xs">
+                        <span>{data.month}</span>
+                        <span className="text-green-600">
+                          ${data.revenue.toLocaleString()}
+                        </span>
+                        <span className="text-red-600">
+                          ${data.expenses.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -219,30 +198,28 @@ export default function DemoPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <RechartsPieChart>
-                  <Pie
-                    data={expenseCategories}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="value"
-                    label={({ name, percent }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
-                    }
-                  >
-                    {expenseCategories.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+              <div className="h-[300px] flex items-center justify-center bg-muted rounded-lg">
+                <div className="text-center">
+                  <PieChart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Expense breakdown chart will be displayed here
+                  </p>
+                  <div className="mt-4 space-y-2">
+                    {expenseCategories.slice(0, 3).map((category, index) => (
+                      <div key={index} className="flex justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span>{category.name}</span>
+                        </div>
+                        <span>${category.value.toLocaleString()}</span>
+                      </div>
                     ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => [
-                      `$${value.toLocaleString()}`,
-                      "Amount",
-                    ]}
-                  />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -297,7 +274,7 @@ export default function DemoPage() {
               Ready to track your real data?
             </h2>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              This demo shows just a glimpse of FinTracker's capabilities.
+              This demo shows just a glimpse of FinTracker&apos;s capabilities.
               Connect your real financial data and start making data-driven
               decisions today.
             </p>
