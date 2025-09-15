@@ -105,7 +105,7 @@ export function HeroSection() {
               </div>
               <div className="p-0">
                 <Image
-                  src="/dashboard.png"
+                  src="/dashboard.svg"
                   alt="FinTracker Dashboard Preview"
                   width={1200}
                   height={800}
