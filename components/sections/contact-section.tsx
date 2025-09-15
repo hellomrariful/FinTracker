@@ -1,13 +1,28 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Phone, MapPin, Clock } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Clock,
+  Linkedin,
+  Twitter,
+  Youtube,
+} from "lucide-react";
+import { toast } from "sonner";
 
 export function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,11 +30,11 @@ export function ContactSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success('Message sent successfully! We\'ll get back to you soon.');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    toast.success("Message sent successfully! We'll get back to you soon.");
     setIsSubmitting(false);
   };
 
@@ -31,7 +46,8 @@ export function ContactSection() {
             Get in Touch
           </h1>
           <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Have questions about Fintracker? Our team is here to help you succeed.
+            Have questions about Fintracker? Our team is here to help you
+            succeed.
           </p>
         </div>
 
@@ -42,7 +58,8 @@ export function ContactSection() {
               Let's talk about your financial goals
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Whether you're just getting started or looking to scale, we're here to help you make the most of Fintracker.
+              Whether you're just getting started or looking to scale, we're
+              here to help you make the most of Fintracker.
             </p>
 
             <div className="mt-12 space-y-8">
@@ -51,9 +68,15 @@ export function ContactSection() {
                   <Mail className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-foreground">Email us</h3>
-                  <p className="text-sm text-muted-foreground">hello@fintracker.com</p>
-                  <p className="text-sm text-muted-foreground">support@fintracker.com</p>
+                  <h3 className="text-base font-semibold text-foreground">
+                    Email us
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    hello@fintracker.com
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    support@fintracker.com
+                  </p>
                 </div>
               </div>
 
@@ -62,9 +85,15 @@ export function ContactSection() {
                   <Phone className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-foreground">Call us</h3>
-                  <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
-                  <p className="text-sm text-muted-foreground">Mon-Fri 9am-6pm PST</p>
+                  <h3 className="text-base font-semibold text-foreground">
+                    Call us
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    +1 (555) 123-4567
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Mon-Fri 9am-6pm PST
+                  </p>
                 </div>
               </div>
 
@@ -73,9 +102,15 @@ export function ContactSection() {
                   <MapPin className="h-6 w-6 text-chart-3" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-foreground">Visit us</h3>
-                  <p className="text-sm text-muted-foreground">123 Innovation Drive</p>
-                  <p className="text-sm text-muted-foreground">San Francisco, CA 94107</p>
+                  <h3 className="text-base font-semibold text-foreground">
+                    Visit us
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    123 Innovation Drive
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    San Francisco, CA 94107
+                  </p>
                 </div>
               </div>
 
@@ -84,10 +119,58 @@ export function ContactSection() {
                   <Clock className="h-6 w-6 text-chart-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-foreground">Business hours</h3>
-                  <p className="text-sm text-muted-foreground">Monday - Friday: 9am - 6pm PST</p>
-                  <p className="text-sm text-muted-foreground">Weekend: Emergency support only</p>
+                  <h3 className="text-base font-semibold text-foreground">
+                    Business hours
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Monday - Friday: 9am - 6pm PST
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Weekend: Emergency support only
+                  </p>
                 </div>
+              </div>
+
+              {/* Social Media Links */}
+              <div className="pt-8 border-t border-border">
+                <h3 className="text-base font-semibold text-foreground mb-4">
+                  Follow Us
+                </h3>
+                <div className="flex items-center gap-4">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link
+                      href="https://www.linkedin.com/company/fintrackeriox"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Linkedin className="h-4 w-4 mr-2" />
+                      LinkedIn
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link
+                      href="https://x.com/hellomrariful"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Twitter className="h-4 w-4 mr-2" />
+                      Twitter
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link
+                      href="https://www.youtube.com/@FinTracker-io"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Youtube className="h-4 w-4 mr-2" />
+                      YouTube
+                    </Link>
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Stay updated with the latest FinTracker news and tips
+                </p>
               </div>
             </div>
           </div>
@@ -149,7 +232,9 @@ export function ContactSection() {
                     <SelectItem value="sales">Sales inquiry</SelectItem>
                     <SelectItem value="support">Technical support</SelectItem>
                     <SelectItem value="billing">Billing question</SelectItem>
-                    <SelectItem value="partnership">Partnership opportunity</SelectItem>
+                    <SelectItem value="partnership">
+                      Partnership opportunity
+                    </SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -167,7 +252,7 @@ export function ContactSection() {
               </div>
 
               <Button type="submit" disabled={isSubmitting} className="w-full">
-                {isSubmitting ? 'Sending...' : 'Send message'}
+                {isSubmitting ? "Sending..." : "Send message"}
               </Button>
             </form>
           </div>

@@ -223,10 +223,47 @@ export function ClientIncome({
         statsResponse;
 
       // Safely extract employee data
-      const employeeData = Array.isArray(employeeStats?.data)
+      const employeeData = Array.isArray(employeeStats?.data?.data)
+        ? employeeStats.data.data
+        : Array.isArray(employeeStats?.data)
         ? employeeStats.data
         : [];
-      const topEmployee = employeeData[0]; // First employee is the top earner due to sorting
+
+      // Find top earner from actual income transactions if API data is not available
+      let topEmployee = employeeData[0]; // First employee is the top earner due to sorting
+
+      if (!topEmployee && incomeData.length > 0) {
+        // Calculate top earner from current income transactions
+        const employeeIncomeMap = new Map();
+        incomeData.forEach((income: any) => {
+          if (income.employeeId && typeof income.employeeId === "object") {
+            const empId = income.employeeId._id;
+            const empName = income.employeeId.name;
+            const current = employeeIncomeMap.get(empId) || {
+              name: empName,
+              totalIncome: 0,
+              transactions: 0,
+            };
+            current.totalIncome += income.amount;
+            current.transactions += 1;
+            employeeIncomeMap.set(empId, current);
+          }
+        });
+
+        if (employeeIncomeMap.size > 0) {
+          const topEarnerEntry = Array.from(employeeIncomeMap.entries()).sort(
+            ([, a], [, b]) => b.totalIncome - a.totalIncome
+          )[0];
+          if (topEarnerEntry) {
+            topEmployee = {
+              id: topEarnerEntry[0],
+              name: topEarnerEntry[1].name,
+              totalIncome: topEarnerEntry[1].totalIncome,
+              transactions: topEarnerEntry[1].transactions,
+            };
+          }
+        }
+      }
 
       // Get total income from statistics response
       const lifetimeTotal = lifetimeStats?.data?.statistics?.totalIncome || 0;
@@ -464,10 +501,10 @@ export function ClientIncome({
               <User className="h-4 w-4 text-chart-4" />
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2">
-                {stats.topEarner && (
-                  <>
-                    <Avatar className="h-6 w-6">
+              {stats.topEarner ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage src={stats.topEarner.avatar} />
                       <AvatarFallback className="text-xs">
                         {stats.topEarner.name
@@ -476,15 +513,27 @@ export function ClientIncome({
                           .join("")}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="text-sm font-bold text-chart-4 truncate">
-                      {stats.topEarner.name}
+                    <div>
+                      <div className="text-sm font-bold text-chart-4 truncate">
+                        {stats.topEarner.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Top earner
+                      </div>
                     </div>
-                  </>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                ${stats.topEarner?.totalIncome.toLocaleString() || "0"} earned
-              </p>
+                  </div>
+                  <div className="text-lg font-bold text-chart-4">
+                    ${stats.topEarner.totalIncome.toLocaleString()}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-2">
+                  <div className="text-sm text-muted-foreground">No data</div>
+                  <div className="text-xs text-muted-foreground">
+                    Assign employees to income
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

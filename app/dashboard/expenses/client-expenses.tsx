@@ -47,6 +47,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   CreditCard,
   Plus,
@@ -242,10 +243,47 @@ export function ClientExpenses({
         statsResponse;
 
       // Safely extract employee data
-      const employeeStatsData = Array.isArray(employeeStats?.data)
+      const employeeStatsData = Array.isArray(employeeStats?.data?.data)
+        ? employeeStats.data.data
+        : Array.isArray(employeeStats?.data)
         ? employeeStats.data
         : [];
-      const topEmployee = employeeStatsData[0]; // First employee is the top spender due to sorting
+
+      // Find top spender from actual expense transactions if API data is not available
+      let topEmployee = employeeStatsData[0]; // First employee is the top spender due to sorting
+
+      if (!topEmployee && expensesData.length > 0) {
+        // Calculate top spender from current expense transactions
+        const employeeExpenseMap = new Map();
+        expensesData.forEach((expense: any) => {
+          if (expense.employeeId && typeof expense.employeeId === "object") {
+            const empId = expense.employeeId._id;
+            const empName = expense.employeeId.name;
+            const current = employeeExpenseMap.get(empId) || {
+              name: empName,
+              totalSpent: 0,
+              transactions: 0,
+            };
+            current.totalSpent += expense.amount;
+            current.transactions += 1;
+            employeeExpenseMap.set(empId, current);
+          }
+        });
+
+        if (employeeExpenseMap.size > 0) {
+          const topSpenderEntry = Array.from(employeeExpenseMap.entries()).sort(
+            ([, a], [, b]) => b.totalSpent - a.totalSpent
+          )[0];
+          if (topSpenderEntry) {
+            topEmployee = {
+              id: topSpenderEntry[0],
+              name: topSpenderEntry[1].name,
+              totalSpent: topSpenderEntry[1].totalSpent,
+              transactions: topSpenderEntry[1].transactions,
+            };
+          }
+        }
+      }
 
       const lifetimeTotal = lifetimeStats?.data?.statistics?.totalExpenses || 0;
       const currentMonthTotal =
@@ -676,12 +714,38 @@ export function ClientExpenses({
               <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-lg font-bold text-primary">
-                {stats?.topSpender?.name || "N/A"}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                ${stats?.topSpender?.totalSpent?.toLocaleString() || "0"} spent
-              </p>
+              {stats?.topSpender ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="text-xs">
+                        {stats.topSpender.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="text-sm font-bold text-primary truncate">
+                        {stats.topSpender.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Top spender
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-lg font-bold text-primary">
+                    ${stats.topSpender.totalSpent?.toLocaleString() || "0"}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-2">
+                  <div className="text-sm text-muted-foreground">No data</div>
+                  <div className="text-xs text-muted-foreground">
+                    Assign employees to expenses
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
