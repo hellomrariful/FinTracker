@@ -1,58 +1,48 @@
-import { mockAuth, type MockUser } from "./mock-auth";
 import { User, AuthError, AuthResponse, UserProfile } from "@/lib/types/auth";
 
-// Convert MockUser to our User type
-function convertMockUserToUser(mockUser: MockUser): User {
-  return {
-    id: mockUser.id,
-    email: mockUser.email,
-    name: mockUser.user_metadata.full_name,
-    avatar: undefined, // Can be added later
-    created_at: new Date().toISOString(),
-  };
-}
-
-// Convert MockUser to UserProfile
-function convertMockUserToProfile(mockUser: MockUser): UserProfile {
-  return {
-    id: mockUser.id,
-    user_id: mockUser.id,
-    name: mockUser.user_metadata.full_name,
-    email: mockUser.email,
-    avatar: undefined,
-    role: mockUser.user_metadata.role,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-}
+const API_URL = process.env.NEXT_PUBLIC_APP_URL || "";
 
 export async function signUp(data: {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
-  company: string;
+  company?: string;
 }): Promise<AuthResponse> {
   try {
-    const response = await mockAuth.signUp(data);
+    const response = await fetch(`${API_URL}/api/auth/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
 
-    if (response.error) {
-      return { user: null, error: response.error };
-    }
+    const result = await response.json();
 
-    if (response.user) {
+    if (!response.ok) {
       return {
-        user: convertMockUserToUser(response.user),
-        error: null,
+        user: null,
+        error: { message: result.error || "Signup failed" },
       };
     }
 
-    return { user: null, error: { message: "Unknown error occurred" } };
+    return {
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: `${result.user.firstName} ${result.user.lastName}`,
+        avatar: result.user.avatar,
+        created_at: result.user.createdAt,
+      },
+      error: null,
+    };
   } catch (error) {
     return {
       user: null,
       error: {
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }
@@ -63,25 +53,39 @@ export async function signIn(
   password: string
 ): Promise<AuthResponse> {
   try {
-    const response = await mockAuth.signIn(email, password);
+    const response = await fetch(`${API_URL}/api/auth/signin`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+      credentials: "include",
+    });
 
-    if (response.error) {
-      return { user: null, error: response.error };
-    }
+    const result = await response.json();
 
-    if (response.user) {
+    if (!response.ok) {
       return {
-        user: convertMockUserToUser(response.user),
-        error: null,
+        user: null,
+        error: { message: result.error || "Signin failed" },
       };
     }
 
-    return { user: null, error: { message: "Unknown error occurred" } };
+    return {
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: `${result.user.firstName} ${result.user.lastName}`,
+        avatar: result.user.avatar,
+        created_at: result.user.createdAt,
+      },
+      error: null,
+    };
   } catch (error) {
     return {
       user: null,
       error: {
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }
@@ -89,12 +93,21 @@ export async function signIn(
 
 export async function signOut(): Promise<{ error: AuthError | null }> {
   try {
-    await mockAuth.signOut();
+    const response = await fetch(`${API_URL}/api/auth/signout`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const result = await response.json();
+      return { error: { message: result.error || "Signout failed" } };
+    }
+
     return { error: null };
   } catch (error) {
     return {
       error: {
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }
@@ -102,8 +115,23 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
 
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const mockUser = mockAuth.getCurrentUser();
-    return mockUser ? convertMockUserToUser(mockUser) : null;
+    const response = await fetch(`${API_URL}/api/auth/me`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const result = await response.json();
+    return {
+      id: result.user.id,
+      email: result.user.email,
+      name: `${result.user.firstName} ${result.user.lastName}`,
+      avatar: result.user.avatar,
+      created_at: result.user.createdAt,
+    };
   } catch (error) {
     console.error("Error getting current user:", error);
     return null;
@@ -114,21 +142,38 @@ export async function getUserProfile(
   userId?: string
 ): Promise<{ data: UserProfile | null; error: AuthError | null }> {
   try {
-    const mockUser = mockAuth.getCurrentUser();
+    const response = await fetch(`${API_URL}/api/auth/me`, {
+      method: "GET",
+      credentials: "include",
+    });
 
-    if (!mockUser) {
-      return { data: null, error: { message: "No user found" } };
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      return {
+        data: null,
+        error: { message: result.error || "Failed to get profile" },
+      };
     }
 
+    const result = await response.json();
     return {
-      data: convertMockUserToProfile(mockUser),
+      data: {
+        id: result.user.id,
+        user_id: result.user.id,
+        name: `${result.user.firstName} ${result.user.lastName}`,
+        email: result.user.email,
+        avatar: result.user.avatar,
+        role: result.user.role,
+        created_at: result.user.createdAt,
+        updated_at: result.user.updatedAt || result.user.createdAt,
+      },
       error: null,
     };
   } catch (error) {
     return {
       data: null,
       error: {
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }
@@ -138,23 +183,25 @@ export async function updateUserProfile(
   updates: Partial<UserProfile>
 ): Promise<{ data: UserProfile | null; error: AuthError | null }> {
   try {
-    // For now, just return the current profile since we're using mock data
-    const mockUser = mockAuth.getCurrentUser();
+    // If there's a profile API, call it; otherwise, fall back to returning current profile merged locally
+    const current = await getUserProfile();
+    if (current.error) return current;
 
-    if (!mockUser) {
-      return { data: null, error: { message: "No user found" } };
-    }
-
-    // In a real implementation, you'd update the user data here
-    return {
-      data: convertMockUserToProfile(mockUser),
-      error: null,
+    const merged: UserProfile = {
+      ...(current.data as UserProfile),
+      ...updates,
+      // Keep id fields intact
+      id: current.data!.id,
+      user_id: current.data!.user_id,
+      updated_at: new Date().toISOString(),
     };
+
+    return { data: merged, error: null };
   } catch (error) {
     return {
       data: null,
       error: {
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Network error",
       },
     };
   }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { BarChart3, Eye, EyeOff, Info, AlertCircle } from "lucide-react";
+import { BarChart3, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { signUp } from "@/lib/auth/auth";
@@ -42,8 +42,8 @@ export function SignupForm() {
       }
 
       if (user) {
-        toast.success("Account created successfully! You are now signed in.");
-        router.push("/dashboard");
+        toast.success("Account created successfully! You can now sign in.");
+        router.push("/auth/signin");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -64,55 +64,6 @@ export function SignupForm() {
         <p className="mt-2 text-sm text-muted-foreground">
           Start your 30-day free trial today
         </p>
-      </div>
-
-      {/* Judging Process Notice */}
-      <div className="mt-6 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-200 mb-1">
-              Judging Process Notice
-            </h3>
-            <p className="text-sm text-orange-700 dark:text-orange-300">
-              For the judging process, we have temporarily stopped user
-              validation. Any information will work to create an account.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Demo Mode Banner */}
-      <div className="mt-4 bg-primary/10 border border-primary/20 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-primary mb-2">
-              Demo Mode Active
-            </h3>
-            <div className="space-y-1 text-sm text-foreground">
-              <div>
-                <strong>Any information works!</strong> Or use the demo account:
-              </div>
-              <div>
-                <strong>Email:</strong> demo@fintracker.com
-              </div>
-              <div>
-                <strong>Password:</strong> fintracker123
-              </div>
-            </div>
-            <Link href="/auth/signin">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-3 text-xs"
-              >
-                Use Demo Account
-              </Button>
-            </Link>
-          </div>
-        </div>
       </div>
 
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -189,7 +140,7 @@ export function SignupForm() {
               </button>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Any password works in demo mode
+              Must be at least 8 characters long
             </p>
           </div>
         </div>

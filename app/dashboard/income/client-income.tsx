@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 
 // Dynamically import the DashboardLayout with no SSR
 const DashboardLayout = dynamic(
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DollarSign,
   Plus,
@@ -49,15 +51,50 @@ import {
   ArrowDownRight,
   User,
   Building,
+  Loader2,
 } from "lucide-react";
-import {
-  dataStore,
-  type IncomeTransaction,
-  type Employee,
-  type Category,
-} from "@/lib/data-store";
 import { IncomeForm } from "@/components/dashboard/income-form";
 import { toast } from "sonner";
+import { api } from "@/lib/api/client";
+
+type IncomeTransaction = {
+  id: string;
+  name: string;
+  source: string;
+  category: string;
+  platform?: string;
+  amount: number;
+  date: string;
+  paymentMethod: string;
+  employeeId?:
+    | string
+    | { _id: string; name: string; email: string; avatar?: string };
+  status: string;
+};
+
+type Employee = {
+  id: string;
+  name: string;
+  role: string;
+  avatar?: string;
+};
+
+type Category = {
+  id: string;
+  name: string;
+  type: string;
+};
+
+type Stats = {
+  lifetimeIncome: number;
+  thisMonthIncome: number;
+  lastMonthIncome: number;
+  incomeGrowth: number;
+  bySource: Record<string, number>;
+  byEmployee: Record<string, number>;
+  highestSource: [string, number];
+  topEarner?: Employee & { totalIncome: number };
+};
 
 type ClientIncomeProps = {
   initialShowAddDialog?: boolean;
@@ -66,111 +103,229 @@ type ClientIncomeProps = {
 export function ClientIncome({
   initialShowAddDialog = false,
 }: ClientIncomeProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [incomeTransactions, setIncomeTransactions] = useState<
     IncomeTransaction[]
   >([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(initialShowAddDialog);
   const [editingIncome, setEditingIncome] = useState<IncomeTransaction | null>(
     null
   );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // Function to fetch all required data
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
 
-  useEffect(() => {
-    if (isMounted) {
-      setIncomeTransactions(dataStore.getIncomeTransactions());
-      setEmployees(dataStore.getEmployees());
-      setCategories(dataStore.getCategories("income"));
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+
+      const startOfMonth = new Date(currentYear, currentMonth, 1)
+        .toISOString()
+        .split("T")[0];
+      const endOfMonth = new Date(currentYear, currentMonth + 1, 0)
+        .toISOString()
+        .split("T")[0];
+      const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1)
+        .toISOString()
+        .split("T")[0];
+      const endOfLastMonth = new Date(currentYear, currentMonth, 0)
+        .toISOString()
+        .split("T")[0];
+
+      // Fetch all required data in parallel using authenticated API client with error handling
+      const [
+        incomeResponse,
+        employeesResponse,
+        categoriesResponse,
+        statsResponse,
+      ] = await Promise.all([
+        api.get<any>("/api/income").catch((err) => {
+          console.error("Failed to fetch income:", err);
+          return { data: { incomes: [] } };
+        }),
+        api.get<any>("/api/employees").catch((err) => {
+          console.error("Failed to fetch employees:", err);
+          return { data: { data: [] } };
+        }),
+        api.get<any>("/api/categories?type=income").catch((err) => {
+          console.error("Failed to fetch categories:", err);
+          return { data: { data: [] } };
+        }),
+        Promise.all([
+          api.get<any>("/api/income/statistics").catch((err) => {
+            console.error("Failed to fetch lifetime stats:", err);
+            return { data: { statistics: { totalIncome: 0 } } };
+          }),
+          api
+            .get<any>(
+              `/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`
+            )
+            .catch((err) => {
+              console.error("Failed to fetch current month stats:", err);
+              return { data: { statistics: { totalIncome: 0 } } };
+            }),
+          api
+            .get<any>(
+              `/api/income/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`
+            )
+            .catch((err) => {
+              console.error("Failed to fetch last month stats:", err);
+              return { data: { statistics: { totalIncome: 0 } } };
+            }),
+          api.get<any>("/api/employees/performance?months=1").catch((err) => {
+            console.error("Failed to fetch employee performance:", err);
+            return { data: [] };
+          }),
+        ]),
+      ]);
+
+      // Set income transactions - ensure it's always an array
+      // API returns { success: true, data: { incomes: [...] } }
+      const incomeData =
+        incomeResponse?.data?.incomes || incomeResponse?.incomes || [];
+      console.log("Income API Response:", incomeResponse);
+      console.log("Extracted income data:", incomeData);
+      // Map _id to id for consistency and ensure unique keys
+      const mappedIncome = Array.isArray(incomeData)
+        ? incomeData.map((income: any) => ({
+            ...income,
+            id:
+              income._id ||
+              income.id ||
+              `income-${Date.now()}-${Math.random()}`,
+          }))
+        : [];
+      setIncomeTransactions(mappedIncome);
+
+      // Set employees
+      // API might return { success: true, data: { data: [...] } } or { success: true, data: [...] }
+      const employeesData =
+        employeesResponse?.data?.data || employeesResponse?.data || [];
+      setEmployees(Array.isArray(employeesData) ? employeesData : []);
+
+      // Set categories - extract from data property
+      // API returns { success: true, data: [...] }
+      const categoriesData =
+        categoriesResponse?.data?.data || categoriesResponse?.data || [];
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+
+      // Extract and process statistics with proper error handling
+      const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] =
+        statsResponse;
+
+      // Safely extract employee data
+      const employeeData = Array.isArray(employeeStats?.data)
+        ? employeeStats.data
+        : [];
+      const topEmployee = employeeData[0]; // First employee is the top earner due to sorting
+
+      // Get total income from statistics response
+      const lifetimeTotal = lifetimeStats?.data?.statistics?.totalIncome || 0;
+      const currentMonthTotal =
+        currentMonthStats?.data?.statistics?.totalIncome || 0;
+      const lastMonthTotal = lastMonthStats?.data?.statistics?.totalIncome || 0;
+
+      const incomeGrowth =
+        lastMonthTotal > 0
+          ? ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
+          : 0;
+
+      // Get source stats from API response or compute from transactions
+      const sourceStats = lifetimeStats?.data?.statistics?.incomeBySource;
+      const bySource = Array.isArray(sourceStats)
+        ? sourceStats.reduce((acc: Record<string, number>, item: any) => {
+            acc[item._id] = item.total;
+            return acc;
+          }, {})
+        : incomeData.reduce(
+            (acc: Record<string, number>, inc: IncomeTransaction) => {
+              acc[inc.source] = (acc[inc.source] || 0) + inc.amount;
+              return acc;
+            },
+            {}
+          );
+
+      const highestSource: [string, number] = (
+        Object.entries(bySource) as [string, number][]
+      )
+        .sort(([, a], [, b]) => b - a)
+        .at(0) || ["", 0];
+
+      setStats({
+        lifetimeIncome: lifetimeTotal,
+        thisMonthIncome: currentMonthTotal,
+        lastMonthIncome: lastMonthTotal,
+        incomeGrowth,
+        bySource,
+        byEmployee: employeeData.reduce(
+          (acc: Record<string, number>, emp: any) => {
+            acc[emp.id] = emp.totalIncome;
+            return acc;
+          },
+          {}
+        ),
+        highestSource,
+        topEarner: topEmployee,
+      });
+    } catch (error) {
+      console.error("Error fetching income data:", error);
+      toast.error("Failed to load income data");
+    } finally {
+      setIsLoading(false);
     }
-  }, [isMounted]);
-
-  // Calculate stats
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  const startOfMonth = new Date(currentYear, currentMonth, 1)
-    .toISOString()
-    .split("T")[0];
-  const endOfMonth = new Date(currentYear, currentMonth + 1, 0)
-    .toISOString()
-    .split("T")[0];
-  const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1)
-    .toISOString()
-    .split("T")[0];
-  const endOfLastMonth = new Date(currentYear, currentMonth, 0)
-    .toISOString()
-    .split("T")[0];
-
-  const lifetimeIncome = dataStore.getTotalIncome();
-  const thisMonthIncome = dataStore.getTotalIncome(startOfMonth, endOfMonth);
-  const lastMonthIncome = dataStore.getTotalIncome(
-    startOfLastMonth,
-    endOfLastMonth
-  );
-  const incomeGrowth =
-    lastMonthIncome > 0
-      ? ((thisMonthIncome - lastMonthIncome) / lastMonthIncome) * 100
-      : 0;
-
-  // Get highest income source
-  const incomeBySource = incomeTransactions.reduce((acc, income) => {
-    acc[income.source] = (acc[income.source] || 0) + income.amount;
-    return acc;
-  }, {} as Record<string, number>);
-  const highestIncomeSource = Object.entries(incomeBySource).reduce(
-    (a, b) => (a[1] > b[1] ? a : b),
-    ["", 0]
-  );
-
-  // Get top earning employee
-  const incomeByEmployee = incomeTransactions.reduce((acc, income) => {
-    acc[income.employeeId] = (acc[income.employeeId] || 0) + income.amount;
-    return acc;
-  }, {} as Record<string, number>);
-  const topEarningEmployeeId = Object.entries(incomeByEmployee).reduce(
-    (a, b) => (a[1] > b[1] ? a : b),
-    ["", 0]
-  )[0];
-  const topEarningEmployee = employees.find(
-    (e) => e.id === topEarningEmployeeId
-  );
-
-  // Get unique sources for dropdown - filter out empty strings
-  const existingSources = [
-    ...new Set(incomeTransactions.map((t) => t.source)),
-  ].filter((source) => source && source.trim() !== "");
-
-  // Filter income transactions based on search
-  const filteredIncomeTransactions = incomeTransactions.filter(
-    (income) =>
-      income.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      income.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      income.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (income.platform &&
-        income.platform.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      employees
-        .find((e) => e.id === income.employeeId)
-        ?.name.toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
-
-  const handleSuccess = () => {
-    setIncomeTransactions(dataStore.getIncomeTransactions());
-    setCategories(dataStore.getCategories("income"));
   };
 
-  const handleDelete = (id: string) => {
+  // Initial data fetch
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Get unique sources for dropdown - filter out empty strings
+  const existingSources = Array.isArray(incomeTransactions)
+    ? [...new Set(incomeTransactions.map((t) => t.source))].filter(
+        (source) => source && source.trim() !== ""
+      )
+    : [];
+
+  // Filter income transactions based on search
+  const filteredIncomeTransactions = Array.isArray(incomeTransactions)
+    ? incomeTransactions.filter(
+        (income) =>
+          income.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          income.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          income.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (income.platform &&
+            income.platform.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          employees
+            .find((e) => e.id === income.employeeId)
+            ?.name.toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      )
+    : [];
+
+  const handleSuccess = () => {
+    fetchData();
+  };
+
+  const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this income transaction?")) {
-      dataStore.deleteIncomeTransaction(id);
-      setIncomeTransactions(dataStore.getIncomeTransactions());
-      toast.success("Income transaction deleted successfully");
+      try {
+        await api.delete(`/api/income/${id}`);
+        await fetchData();
+        toast.success("Income transaction deleted successfully");
+      } catch (error) {
+        console.error("Error deleting income:", error);
+        toast.error("Failed to delete income transaction");
+      }
     }
   };
 
@@ -178,6 +333,34 @@ export function ClientIncome({
     setEditingIncome(income);
     setIsEditDialogOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">
+              Loading income data...
+            </p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <DashboardLayout>
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading stats...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -228,7 +411,7 @@ export function ClientIncome({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">
-                ${lifetimeIncome.toLocaleString()}
+                ${stats.lifetimeIncome.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Total accumulated income
@@ -243,19 +426,19 @@ export function ClientIncome({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-accent">
-                ${thisMonthIncome.toLocaleString()}
+                ${stats.thisMonthIncome.toLocaleString()}
               </div>
               <div
                 className={`flex items-center text-xs mt-1 ${
-                  incomeGrowth >= 0 ? "text-accent" : "text-destructive"
+                  stats.incomeGrowth >= 0 ? "text-accent" : "text-destructive"
                 }`}
               >
-                {incomeGrowth >= 0 ? (
+                {stats.incomeGrowth >= 0 ? (
                   <ArrowUpRight className="mr-1 h-3 w-3" />
                 ) : (
                   <ArrowDownRight className="mr-1 h-3 w-3" />
                 )}
-                {Math.abs(incomeGrowth).toFixed(1)}% from last month
+                {Math.abs(stats.incomeGrowth).toFixed(1)}% from last month
               </div>
             </CardContent>
           </Card>
@@ -267,10 +450,10 @@ export function ClientIncome({
             </CardHeader>
             <CardContent>
               <div className="text-lg font-bold text-chart-3">
-                {highestIncomeSource[0] || "N/A"}
+                {stats.highestSource[0] || "N/A"}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                ${highestIncomeSource[1].toLocaleString()} earned
+                ${stats.highestSource[1].toLocaleString()} earned
               </p>
             </CardContent>
           </Card>
@@ -282,28 +465,25 @@ export function ClientIncome({
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                {topEarningEmployee && (
+                {stats.topEarner && (
                   <>
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={topEarningEmployee.avatar} />
+                      <AvatarImage src={stats.topEarner.avatar} />
                       <AvatarFallback className="text-xs">
-                        {topEarningEmployee.name
+                        {stats.topEarner.name
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}
                       </AvatarFallback>
                     </Avatar>
                     <div className="text-sm font-bold text-chart-4 truncate">
-                      {topEarningEmployee.name}
+                      {stats.topEarner.name}
                     </div>
                   </>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                $
-                {incomeByEmployee[topEarningEmployeeId]?.toLocaleString() ||
-                  "0"}{" "}
-                earned
+                ${stats.topEarner?.totalIncome.toLocaleString() || "0"} earned
               </p>
             </CardContent>
           </Card>
@@ -334,6 +514,7 @@ export function ClientIncome({
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">Select</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Source</TableHead>
                     <TableHead>Category</TableHead>
@@ -346,62 +527,107 @@ export function ClientIncome({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredIncomeTransactions.map((income) => {
-                    const employee = employees.find(
-                      (e) => e.id === income.employeeId
-                    );
-                    return (
-                      <TableRow key={income.id}>
-                        <TableCell className="font-medium">
-                          {income.name}
-                        </TableCell>
-                        <TableCell>{income.source}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{income.category}</Badge>
-                        </TableCell>
-                        <TableCell>{income.platform || "-"}</TableCell>
-                        <TableCell className="font-mono text-accent">
-                          ${income.amount.toLocaleString()}
-                        </TableCell>
-                        <TableCell>{income.date}</TableCell>
-                        <TableCell>{income.paymentMethod}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={employee?.avatar} />
-                              <AvatarFallback className="text-xs">
-                                {employee?.name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("") || "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">
-                              {employee?.name || "Unknown"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
+                  {filteredIncomeTransactions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={10} className="text-center py-8">
+                        {searchTerm ? (
+                          <p className="text-muted-foreground">
+                            No income transactions match your search
+                          </p>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <p className="text-muted-foreground">
+                              No income transactions yet
+                            </p>
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditClick(income)}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setIsAddDialogOpen(true)}
                             >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(income.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
+                              <Plus className="mr-2 h-4 w-4" />
+                              Add Your First Income
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredIncomeTransactions.map((income) => {
+                      // Handle both populated and non-populated employee data
+                      const employee =
+                        typeof income.employeeId === "object" &&
+                        income.employeeId !== null
+                          ? {
+                              id: income.employeeId._id,
+                              name: income.employeeId.name,
+                              avatar: income.employeeId.avatar,
+                            } // Use populated employee data directly
+                          : employees.find((e) => e.id === income.employeeId); // Find by ID if not populated
+                      return (
+                        <TableRow key={income.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.has(income.id)}
+                              onCheckedChange={() => {
+                                const next = new Set(selectedIds);
+                                if (next.has(income.id)) next.delete(income.id);
+                                else next.add(income.id);
+                                setSelectedIds(next);
+                              }}
+                              aria-label={`Select ${income.name}`}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {income.name}
+                          </TableCell>
+                          <TableCell>{income.source}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{income.category}</Badge>
+                          </TableCell>
+                          <TableCell>{income.platform || "-"}</TableCell>
+                          <TableCell className="font-mono text-accent">
+                            ${income.amount.toLocaleString()}
+                          </TableCell>
+                          <TableCell>{income.date}</TableCell>
+                          <TableCell>{income.paymentMethod}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={employee?.avatar} />
+                                <AvatarFallback className="text-xs">
+                                  {employee?.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("") || "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm">
+                                {employee?.name || "Unknown"}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditClick(income)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(income.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </div>

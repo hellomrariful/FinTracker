@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import {
   Card,
@@ -48,9 +49,26 @@ import {
   Monitor,
   Smartphone,
   DollarSign,
+  Loader2,
 } from "lucide-react";
-import { dataStore, type Asset } from "@/lib/data-store";
 import { toast } from "sonner";
+import { api } from "@/lib/api/client";
+type Asset = {
+  id: string;
+  _id?: string;
+  name: string;
+  category: "physical" | "digital";
+  subCategory?: string;
+  purchaseDate: string;
+  purchasePrice: number;
+  currentValue?: number;
+  condition: "excellent" | "good" | "fair" | "poor";
+  notes?: string;
+  depreciationRate?: number;
+  warrantyExpiry?: string;
+  location?: string;
+};
+
 type ClientAssetsProps = {
   initialShowAddDialog?: boolean;
 };
@@ -58,30 +76,65 @@ type ClientAssetsProps = {
 export function ClientAssets({
   initialShowAddDialog = false,
 }: ClientAssetsProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(initialShowAddDialog);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [activeTab, setActiveTab] = useState("all");
-  const [isMounted, setIsMounted] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Fetch assets from API
+  const fetchAssets = async () => {
+    try {
+      setIsLoading(true);
+      const result = await api
+        .get<any>("/api/assets")
+        .catch((err) => {
+          console.error("Failed to fetch assets:", err);
+          return { data: { assets: [] } };
+        });
+      // Map _id to id for consistency
+      // API returns { success: true, data: { assets: [...] } }
+      const assetsData = result?.data?.assets || result?.assets || [];
+      console.log("Assets API Response:", result);
+      console.log("Extracted assets data:", assetsData);
+      const mappedAssets = Array.isArray(assetsData)
+        ? assetsData.map((asset: any) => ({
+            ...asset,
+            id: asset._id || asset.id,
+          }))
+        : [];
+      setAssets(mappedAssets);
+    } catch (error) {
+      console.error("Error fetching assets:", error);
+      toast.error("Failed to load assets");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setIsMounted(true);
-    setAssets(dataStore.getAssets());
+    fetchAssets();
   }, []);
 
   // Calculate totals
   const physicalAssets = assets.filter((a) => a.category === "physical");
   const digitalAssets = assets.filter((a) => a.category === "digital");
   const totalPhysicalValue = physicalAssets.reduce(
-    (sum, a) => sum + a.purchasePrice,
+    (sum, a) => sum + (a.currentValue || a.purchasePrice),
     0
   );
   const totalDigitalValue = digitalAssets.reduce(
-    (sum, a) => sum + a.purchasePrice,
+    (sum, a) => sum + (a.currentValue || a.purchasePrice),
     0
   );
   const totalValue = totalPhysicalValue + totalDigitalValue;
+  const totalPurchaseValue = assets.reduce(
+    (sum, a) => sum + a.purchasePrice,
+    0
+  );
 
   // Filter assets based on search and tab
   const filteredAssets = assets.filter((asset) => {
@@ -97,43 +150,63 @@ export function ClientAssets({
     return matchesSearch && matchesTab;
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    const assetData = {
-      name: formData.get("name") as string,
-      category: formData.get("category") as "physical" | "digital",
-      subCategory: (formData.get("subCategory") as string) || undefined,
-      purchaseDate: formData.get("purchaseDate") as string,
-      purchasePrice: parseFloat(formData.get("purchasePrice") as string),
-      condition: formData.get("condition") as
-        | "excellent"
-        | "good"
-        | "fair"
-        | "poor",
-      notes: (formData.get("notes") as string) || undefined,
-    };
+    try {
+      const assetData = {
+        name: formData.get("name") as string,
+        category: formData.get("category") as "physical" | "digital",
+        subCategory: (formData.get("subCategory") as string) || undefined,
+        purchaseDate: formData.get("purchaseDate") as string,
+        purchasePrice: parseFloat(formData.get("purchasePrice") as string),
+        currentValue:
+          parseFloat(formData.get("currentValue") as string) || undefined,
+        condition: formData.get("condition") as
+          | "excellent"
+          | "good"
+          | "fair"
+          | "poor",
+        notes: (formData.get("notes") as string) || undefined,
+      };
 
-    if (editingAsset) {
-      dataStore.updateAsset(editingAsset.id, assetData);
-      toast.success("Asset updated successfully");
-      setEditingAsset(null);
-    } else {
-      dataStore.addAsset(assetData);
-      toast.success("Asset added successfully");
-      setIsAddDialogOpen(false);
+      if (editingAsset) {
+        // Update existing asset
+        await api.patch(`/api/assets/${editingAsset.id}`, assetData);
+
+        toast.success("Asset updated successfully");
+        setEditingAsset(null);
+        setIsEditDialogOpen(false);
+      } else {
+        // Create new asset
+        await api.post("/api/assets", assetData);
+
+        toast.success("Asset added successfully");
+        setIsAddDialogOpen(false);
+      }
+
+      await fetchAssets();
+      (e.target as HTMLFormElement).reset();
+    } catch (error) {
+      console.error("Error submitting asset:", error);
+      toast.error(
+        editingAsset ? "Failed to update asset" : "Failed to add asset"
+      );
     }
-
-    setAssets(dataStore.getAssets());
-    (e.target as HTMLFormElement).reset();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this asset?")) {
-      dataStore.deleteAsset(id);
-      setAssets(dataStore.getAssets());
-      toast.success("Asset deleted successfully");
+      try {
+        await api.delete(`/api/assets/${id}`);
+
+        toast.success("Asset deleted successfully");
+        await fetchAssets();
+      } catch (error) {
+        console.error("Error deleting asset:", error);
+        toast.error("Failed to delete asset");
+      }
     }
   };
 
@@ -254,6 +327,22 @@ export function ClientAssets({
       return <Monitor className="h-5 w-5 text-purple-500" />;
     return <Package className="h-5 w-5 text-gray-500" />;
   };
+
+  const handleEditClick = (asset: Asset) => {
+    setEditingAsset(asset);
+    setIsEditDialogOpen(true);
+  };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -417,7 +506,7 @@ export function ClientAssets({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setEditingAsset(asset)}
+                                onClick={() => handleEditClick(asset)}
                               >
                                 <Edit className="h-4 w-4" />
                                 <span className="sr-only">Edit</span>
@@ -453,6 +542,19 @@ export function ClientAssets({
             </div>
           </div>
         </Card>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Asset</DialogTitle>
+              <DialogDescription>
+                Update the details of your asset.
+              </DialogDescription>
+            </DialogHeader>
+            <AssetForm asset={editingAsset || undefined} />
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

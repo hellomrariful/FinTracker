@@ -28,138 +28,164 @@ import {
   Award,
   Star,
   Crown,
-  Users
+  Users,
+  Loader2
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
-import { dataStore } from '@/lib/data-store';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api/client';
 
-// Calculate current month data
-const now = new Date();
-const currentMonth = now.getMonth();
-const currentYear = now.getFullYear();
-const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
-const endOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
+interface MonthData {
+  totalIncome: number;
+  totalExpenses: number;
+  totalTransactions: number;
+}
 
-const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1).toISOString().split('T')[0];
-const endOfLastMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
+interface CategoryData {
+  category: string;
+  amount: number;
+  percentage: number;
+  normalized: number;
+  color: string;
+}
 
-// Get data from store
-const totalIncome = dataStore.getTotalIncome();
-const totalExpenses = dataStore.getTotalExpenses();
-const currentMonthIncome = dataStore.getTotalIncome(startOfMonth, endOfMonth);
-const currentMonthExpenses = dataStore.getTotalExpenses(startOfMonth, endOfMonth);
-const lastMonthIncome = dataStore.getTotalIncome(startOfLastMonth, endOfLastMonth);
-const lastMonthExpenses = dataStore.getTotalExpenses(startOfLastMonth, endOfLastMonth);
+interface Transaction {
+  id: string;
+  name: string;
+  amount: number;
+  date: string;
+  type: 'income' | 'expense';
+}
 
-const netProfit = currentMonthIncome - currentMonthExpenses;
-const roi = currentMonthExpenses > 0 ? (netProfit / currentMonthExpenses) * 100 : 0;
+interface EmployeePerformance {
+  id: string;
+  name: string;
+  role: string;
+  avatar?: string;
+  totalIncome: number;
+  transactions: number;
+  growth: number;
+}
 
-// Calculate growth percentages
-const incomeGrowth = lastMonthIncome > 0 ? ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0;
-const expenseGrowth = lastMonthExpenses > 0 ? ((currentMonthExpenses - lastMonthExpenses) / lastMonthExpenses) * 100 : 0;
-const profitGrowth = lastMonthIncome - lastMonthExpenses > 0 ? ((netProfit - (lastMonthIncome - lastMonthExpenses)) / (lastMonthIncome - lastMonthExpenses)) * 100 : 0;
-
-// Generate realistic revenue data for the last 6 months
-const generateRevenueData = () => {
-  const data = [];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  
-  // Get actual data for the last 6 months
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date(currentYear, currentMonth - i, 1);
-    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
-    const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
-    
-    const monthIncome = dataStore.getTotalIncome(monthStart, monthEnd);
-    const monthExpenses = dataStore.getTotalExpenses(monthStart, monthEnd);
-    
-    data.push({
-      month: months[5 - i] || date.toLocaleDateString('en-US', { month: 'short' }),
-      revenue: monthIncome || (45000 + Math.random() * 20000), // Fallback with some variation
-      expenses: monthExpenses || (32000 + Math.random() * 15000)
-    });
-  }
-  
-  return data;
-};
-
-const revenueData = generateRevenueData();
-
-// Get expense breakdown by category with actual data
-const expenseTransactions = dataStore.getExpenseTransactions();
-const expenseByCategory = expenseTransactions.reduce((acc, transaction) => {
-  acc[transaction.category] = (acc[transaction.category] || 0) + transaction.amount;
-  return acc;
-}, {} as Record<string, number>);
-
-// Create spider chart data from actual expense data
-const spiderChartData = Object.entries(expenseByCategory).length > 0 
-  ? Object.entries(expenseByCategory).map(([name, value], index) => {
-      const maxValue = Math.max(...Object.values(expenseByCategory));
-      return {
-        category: name,
-        amount: value,
-        percentage: Math.round((value / totalExpenses) * 100),
-        normalized: Math.round((value / maxValue) * 100),
-        color: `hsl(var(--chart-${(index % 5) + 1}))`
-      };
-    })
-  : [
-      { category: 'Software', amount: 2450, percentage: 25, normalized: 80, color: 'hsl(var(--chart-1))' },
-      { category: 'Marketing', amount: 6200, percentage: 35, normalized: 100, color: 'hsl(var(--chart-2))' },
-      { category: 'Operations', amount: 1850, percentage: 15, normalized: 60, color: 'hsl(var(--chart-3))' },
-      { category: 'Equipment', amount: 3200, percentage: 20, normalized: 70, color: 'hsl(var(--chart-4))' },
-      { category: 'Travel', amount: 850, percentage: 5, normalized: 30, color: 'hsl(var(--chart-5))' }
-    ];
-
-// Get recent transactions with actual data
-const allTransactions = [
-  ...dataStore.getIncomeTransactions().map(t => ({ ...t, type: 'income' as const })),
-  ...dataStore.getExpenseTransactions().map(t => ({ ...t, type: 'expense' as const, amount: -t.amount }))
-].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-
-// Top performing employees data with actual calculations
-const employees = dataStore.getEmployees();
-const incomeTransactions = dataStore.getIncomeTransactions();
-
-const employeePerformance = employees.map(employee => {
-  const employeeIncome = incomeTransactions
-    .filter(t => t.employeeId === employee.id)
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const employeeTransactions = incomeTransactions.filter(t => t.employeeId === employee.id).length;
-  
-  const lastMonthIncome = incomeTransactions
-    .filter(t => t.employeeId === employee.id && t.date >= startOfLastMonth && t.date <= endOfLastMonth)
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const currentMonthIncome = incomeTransactions
-    .filter(t => t.employeeId === employee.id && t.date >= startOfMonth && t.date <= endOfMonth)
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const growth = lastMonthIncome > 0 ? ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0;
-  
-  return {
-    ...employee,
-    totalIncome: employeeIncome,
-    transactions: employeeTransactions,
-    currentMonthIncome,
-    growth,
-    avgPerTransaction: employeeTransactions > 0 ? employeeIncome / employeeTransactions : 0
-  };
-}).sort((a, b) => b.totalIncome - a.totalIncome).slice(0, 5);
-
-const getRankIcon = (rank: number) => {
-  switch (rank) {
-    case 1: return <Crown className="h-4 w-4 text-yellow-500" />;
-    case 2: return <Medal className="h-4 w-4 text-gray-400" />;
-    case 3: return <Award className="h-4 w-4 text-amber-600" />;
-    default: return <Star className="h-4 w-4 text-muted-foreground" />;
-  }
-};
+interface DashboardData {
+  currentMonth: MonthData;
+  lastMonth: MonthData;
+  expenseCategories: CategoryData[];
+  recentTransactions: Transaction[];
+  employeePerformance: EmployeePerformance[];
+}
 
 export function DashboardOverview() {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [chartData, setChartData] = useState<Array<{ month: string; revenue: number; expenses: number; }>>([]);
+  
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+
+        // Get current and last month dates
+        const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
+        const endOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
+        const startOfLastMonth = new Date(currentYear, currentMonth - 1, 1).toISOString().split('T')[0];
+        const endOfLastMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
+
+        // Fetch current month data using authenticated API client
+        const [currentIncome, currentExpenses, lastIncome, lastExpenses, historicalData, categories] = await Promise.all([
+          api.get<any>(`/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
+          api.get<any>(`/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`),
+          api.get<any>(`/api/income/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
+          api.get<any>(`/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`),
+          api.get<any>(`/api/income/statistics?months=6`),
+          api.get<any>(`/api/expenses/statistics?groupBy=category`)
+        ]);
+
+        // Fetch recent transactions
+        const recentTransactions = await api.get<any>('/api/transactions/recent?limit=5');
+        
+        // Fetch employee performance
+        const employeeStats = await api.get<any>('/api/employees/performance?months=1');
+
+        const expenseCategories = categories?.data && Array.isArray(categories.data) 
+          ? categories.data.map((cat: any, index: number) => ({
+              category: cat.category,
+              amount: cat.total,
+              percentage: Math.round((cat.total / (categories.totalAmount || 1)) * 100),
+              normalized: Math.round((cat.total / Math.max(...categories.data.map((c: any) => c.total), 1)) * 100),
+              color: `hsl(var(--chart-${(index % 5) + 1}))`
+            }))
+          : [];
+
+        setData({
+          currentMonth: {
+            totalIncome: currentIncome?.total || 0,
+            totalExpenses: currentExpenses?.total || 0,
+            totalTransactions: (currentIncome?.count || 0) + (currentExpenses?.count || 0)
+          },
+          lastMonth: {
+            totalIncome: lastIncome?.total || 0,
+            totalExpenses: lastExpenses?.total || 0,
+            totalTransactions: (lastIncome?.count || 0) + (lastExpenses?.count || 0)
+          },
+          expenseCategories,
+          recentTransactions: recentTransactions?.data || [],
+          employeePerformance: employeeStats?.data || []
+        });
+
+        // Set chart data
+        setChartData(historicalData?.monthlyData || []);
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="min-h-[600px] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate metrics
+  const netProfit = data.currentMonth.totalIncome - data.currentMonth.totalExpenses;
+  const roi = data.currentMonth.totalExpenses > 0 ? (netProfit / data.currentMonth.totalExpenses) * 100 : 0;
+
+  const incomeGrowth = data.lastMonth.totalIncome > 0 
+    ? ((data.currentMonth.totalIncome - data.lastMonth.totalIncome) / data.lastMonth.totalIncome) * 100 
+    : 0;
+
+  const expenseGrowth = data.lastMonth.totalExpenses > 0 
+    ? ((data.currentMonth.totalExpenses - data.lastMonth.totalExpenses) / data.lastMonth.totalExpenses) * 100 
+    : 0;
+
+  const lastMonthProfit = data.lastMonth.totalIncome - data.lastMonth.totalExpenses;
+  const profitGrowth = lastMonthProfit > 0 
+    ? ((netProfit - lastMonthProfit) / lastMonthProfit) * 100 
+    : 0;
+
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1: return <Crown className="h-4 w-4 text-yellow-500" />;
+      case 2: return <Medal className="h-4 w-4 text-gray-400" />;
+      case 3: return <Award className="h-4 w-4 text-amber-600" />;
+      default: return <Star className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -170,28 +196,28 @@ export function DashboardOverview() {
             Welcome back! Here's what's happening with your finances.
           </p>
         </div>
-       {/* Quick Add Button */}
-            <div className="flex items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/income?add=true">Add Income</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/expenses?add=true">Add Expense</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/assets?add=true">Add Asset</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+        {/* Quick Add Button */}
+        <div className="flex items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/income?add=true">Add Income</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/expenses?add=true">Add Expense</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/assets?add=true">Add Asset</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -202,7 +228,7 @@ export function DashboardOverview() {
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">${currentMonthIncome.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-primary">${data.currentMonth.totalIncome.toLocaleString()}</div>
             <div className={`flex items-center text-xs mt-1 ${incomeGrowth >= 0 ? 'text-accent' : 'text-destructive'}`}>
               {incomeGrowth >= 0 ? (
                 <ArrowUpRight className="mr-1 h-3 w-3" />
@@ -220,7 +246,7 @@ export function DashboardOverview() {
             <CreditCard className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">${currentMonthExpenses.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-accent">${data.currentMonth.totalExpenses.toLocaleString()}</div>
             <div className={`flex items-center text-xs mt-1 ${expenseGrowth <= 0 ? 'text-accent' : 'text-destructive'}`}>
               {expenseGrowth >= 0 ? (
                 <ArrowUpRight className="mr-1 h-3 w-3" />
@@ -278,7 +304,7 @@ export function DashboardOverview() {
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData}>
+                <AreaChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis 
                     dataKey="month" 
@@ -333,7 +359,7 @@ export function DashboardOverview() {
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={spiderChartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                <RadarChart data={data.expenseCategories} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
                   <PolarGrid 
                     stroke="hsl(var(--border))" 
                     strokeOpacity={0.3}
@@ -411,7 +437,7 @@ export function DashboardOverview() {
                   <div className="w-3 h-3 rounded-full bg-primary"></div>
                   Expense Distribution
                 </h4>
-                {spiderChartData.slice(0, 3).map((category, index) => (
+                {data.expenseCategories.slice(0, 3).map((category, index) => (
                   <div key={index} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{category.category}</span>
                     <span className="font-medium">${category.amount.toLocaleString()}</span>
@@ -423,7 +449,7 @@ export function DashboardOverview() {
                   <div className="w-3 h-3 rounded-full bg-accent border-2 border-dashed border-accent"></div>
                   Category Share
                 </h4>
-                {spiderChartData.slice(0, 3).map((category, index) => (
+                {data.expenseCategories.slice(0, 3).map((category, index) => (
                   <div key={index} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{category.category}</span>
                     <span className="font-medium">{category.percentage}%</span>
@@ -447,7 +473,7 @@ export function DashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {allTransactions.length > 0 ? allTransactions.map((transaction) => (
+              {data.recentTransactions.length > 0 ? data.recentTransactions.map((transaction) => (
                 <div key={transaction.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
@@ -501,7 +527,7 @@ export function DashboardOverview() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {employeePerformance.length > 0 ? employeePerformance.map((employee, index) => (
+            {data.employeePerformance.length > 0 ? data.employeePerformance.map((employee, index) => (
               <div 
                 key={employee.id} 
                 className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-all duration-200 cursor-pointer group"
