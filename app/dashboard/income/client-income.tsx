@@ -40,7 +40,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BulkOperations } from "@/components/dashboard/bulk-operations";
 import {
   DollarSign,
   Plus,
@@ -511,40 +510,6 @@ export function ClientIncome({
               </div>
             </div>
 
-            <BulkOperations
-              items={filteredIncomeTransactions}
-              selectedIds={selectedIds}
-              onSelectionChange={setSelectedIds}
-              onBulkAction={async (action, ids) => {
-                try {
-                  switch (action) {
-                    case "delete":
-                      await Promise.all(ids.map((id) => api.delete(`/api/income/${id}`)));
-                      toast.success("Selected income deleted");
-                      break;
-                    case "export": {
-                      const selected = filteredIncomeTransactions.filter((t) => ids.includes(t.id));
-                      const blob = new Blob([JSON.stringify(selected, null, 2)], { type: "application/json" });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = `income-export-${new Date().toISOString()}.json`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(url);
-                      toast.success("Exported selected income to JSON");
-                      break;
-                    }
-                    default:
-                      toast.info("This bulk action is not implemented yet");
-                  }
-                } finally {
-                  await fetchData();
-                }
-              }}
-              itemType="income"
-            />
 
             <div className="rounded-md border">
               <Table>
