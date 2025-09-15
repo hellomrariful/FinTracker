@@ -95,8 +95,10 @@ export class IncomeRepository {
   async find(userId: string, filters: IncomeFilters) {
     await this.ensureConnection();
 
+    console.log("[IncomeRepo] Finding income for user:", userId);
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const query: any = { userId: userObjectId };
+    console.log("[IncomeRepo] Initial query:", JSON.stringify(query));
 
     // Text search
     if (filters.q) {
@@ -150,6 +152,9 @@ export class IncomeRepository {
 
     // Execute query
     const skip = (filters.page - 1) * filters.limit;
+    
+    console.log("[IncomeRepo] Final query before execution:", JSON.stringify(query));
+    console.log("[IncomeRepo] Sort:", sort, "Skip:", skip, "Limit:", filters.limit);
 
     const [incomes, total] = await Promise.all([
       Income.find(query)
@@ -160,6 +165,8 @@ export class IncomeRepository {
         .lean(),
       Income.countDocuments(query),
     ]);
+    
+    console.log("[IncomeRepo] Query results - Found:", incomes.length, "Total:", total);
 
     // Get aggregates
     const aggregates = await Income.aggregate([

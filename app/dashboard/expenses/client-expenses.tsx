@@ -163,28 +163,24 @@ export function ClientExpenses({
         statsResponse,
       ] = await Promise.all([
         api
-          .get<{
-            expenses: ExpenseTransaction[];
-            pagination?: any;
-            stats?: any;
-          }>("/api/expenses")
+          .get<any>("/api/expenses")
           .catch((err) => {
             console.error("Failed to fetch expenses:", err);
-            return { expenses: [] };
+            return { data: { expenses: [] } };
           }),
         api
-          .get<{ success: boolean; data: Employee[] }>("/api/employees")
+          .get<any>("/api/employees")
           .catch((err) => {
             console.error("Failed to fetch employees:", err);
-            return { success: false, data: [] };
+            return { data: { data: [] } };
           }),
-        api.get<Category[]>("/api/categories?type=expense").catch((err) => {
+        api.get<any>("/api/categories?type=expense").catch((err) => {
           console.error("Failed to fetch categories:", err);
-          return [];
+          return { data: { data: [] } };
         }),
         Promise.all([
           api
-            .get<{ data: { statistics: { totalExpenses: number } } }>(
+            .get<any>(
               "/api/expenses/statistics"
             )
             .catch((err) => {
@@ -192,7 +188,7 @@ export function ClientExpenses({
               return { data: { statistics: { totalExpenses: 0 } } };
             }),
           api
-            .get<{ data: { statistics: { totalExpenses: number } } }>(
+            .get<any>(
               `/api/expenses/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`
             )
             .catch((err) => {
@@ -203,7 +199,7 @@ export function ClientExpenses({
               return { data: { statistics: { totalExpenses: 0 } } };
             }),
           api
-            .get<{ data: { statistics: { totalExpenses: number } } }>(
+            .get<any>(
               `/api/expenses/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`
             )
             .catch((err) => {
@@ -211,7 +207,7 @@ export function ClientExpenses({
               return { data: { statistics: { totalExpenses: 0 } } };
             }),
           api
-            .get<{ data: EmployeeSpendingData[] }>(
+            .get<any>(
               "/api/employees/spending?months=1"
             )
             .catch((err) => {
@@ -221,19 +217,29 @@ export function ClientExpenses({
         ]),
       ]);
 
-      // Set expenses - extract from expenses property
-      const expensesData = expensesResponse?.expenses || [];
-      setExpenses(Array.isArray(expensesData) ? expensesData : []);
+      // Set expenses - extract from data.expenses property
+      // API returns { success: true, data: { expenses: [...] } }
+      const expensesData = expensesResponse?.data?.expenses || expensesResponse?.expenses || [];
+      console.log("Expenses API Response:", expensesResponse);
+      console.log("Extracted expenses data:", expensesData);
+      // Map _id to id for consistency and ensure unique keys
+      const mappedExpenses = Array.isArray(expensesData) 
+        ? expensesData.map((expense: any) => ({
+            ...expense,
+            id: expense._id || expense.id || `expense-${Date.now()}-${Math.random()}`
+          }))
+        : [];
+      setExpenses(mappedExpenses);
 
       // Set employees
-      const employeesData = employeesResponse?.data || [];
+      // API might return { success: true, data: { data: [...] } } or { success: true, data: [...] }
+      const employeesData = employeesResponse?.data?.data || employeesResponse?.data || [];
       setEmployees(Array.isArray(employeesData) ? employeesData : []);
 
-      // Set categories - this comes as direct array
-      const categoriesData = Array.isArray(categoriesResponse)
-        ? categoriesResponse
-        : [];
-      setCategories(categoriesData);
+      // Set categories - extract from data property
+      // API returns { success: true, data: [...] }
+      const categoriesData = categoriesResponse?.data?.data || categoriesResponse?.data || [];
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
 
       // Extract and process statistics with proper error handling
       const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] =
@@ -324,8 +330,8 @@ export function ClientExpenses({
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategory(value);
-    setShowNewCategoryInput(value === "new");
-    if (value !== "new") {
+    setShowNewCategoryInput(value === "new-category");
+    if (value !== "new-category") {
       setNewCategory("");
     }
   };
@@ -338,7 +344,7 @@ export function ClientExpenses({
       let categoryName = selectedCategory;
 
       // Create new category if needed
-      if (selectedCategory === "new" && newCategory.trim()) {
+      if (selectedCategory === "new-category" && newCategory.trim()) {
         const newCat = await api.post<any>("/api/categories", {
           name: newCategory.trim(),
           type: "expense",
@@ -371,7 +377,7 @@ export function ClientExpenses({
 
       if (editingExpense) {
         // Update existing expense
-        await api.put(`/api/expenses/${editingExpense.id}`, expenseData);
+        await api.patch(`/api/expenses/${editingExpense.id}`, expenseData);
         toast.success("Expense updated successfully");
         setIsEditDialogOpen(false);
       } else {
@@ -464,7 +470,7 @@ export function ClientExpenses({
                     {category.name}
                   </SelectItem>
                 ))}
-              <SelectItem value="new">+ Add new category</SelectItem>
+              <SelectItem key="new-category" value="new-category">+ Add new category</SelectItem>
             </SelectContent>
           </Select>
           {showNewCategoryInput && (

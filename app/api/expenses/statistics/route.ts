@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth/protected-route";
 import * as apiResponse from "@/lib/api-response";
 import { connectDB } from "@/lib/db/mongoose";
@@ -7,8 +7,9 @@ import mongoose from "mongoose";
 import { z } from "zod";
 
 const StatsQuerySchema = z.object({
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  groupBy: z.string().optional(),
 });
 
 // GET /api/expenses/statistics - Get expense statistics
@@ -23,16 +24,49 @@ export const GET = withAuth(async (req: NextRequest, { auth }) => {
       params[key] = value;
     });
 
-    // Validate query params
-    const validationResult = StatsQuerySchema.safeParse(params);
-    if (!validationResult.success) {
-      return apiResponse.badRequest(
-        "Invalid query parameters",
-        validationResult.error
-      );
+    // Check if requesting category grouping
+    if (params.groupBy === 'category') {
+      const query = {
+        userId: new mongoose.Types.ObjectId(auth.user.userId),
+        status: { $in: ["completed", "reimbursement_pending"] },
+      };
+      
+      // Get expenses by category
+      const categoryData = await Expense.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: "$category",
+            total: { $sum: "$amount" },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { total: -1 } },
+      ]);
+      
+      // Calculate total for percentages
+      const totalAmount = categoryData.reduce((sum, cat) => sum + cat.total, 0);
+      
+      // Format response
+      const data = categoryData.map(cat => ({
+        category: cat._id || 'Uncategorized',
+        total: cat.total,
+        count: cat.count,
+      }));
+      
+      return NextResponse.json({
+        data,
+        totalAmount,
+      });
     }
 
-    const { startDate, endDate } = validationResult.data;
+    // Parse dates if provided
+    let startDate, endDate;
+    if (params.startDate) startDate = new Date(params.startDate);
+    if (params.endDate) {
+      endDate = new Date(params.endDate);
+      endDate.setHours(23, 59, 59, 999);
+    }
 
     // Build query
     const query: any = {
@@ -46,14 +80,21 @@ export const GET = withAuth(async (req: NextRequest, { auth }) => {
       if (endDate) query.date.$lte = endDate;
     }
 
-    // Get total expenses
-    const totalExpensesResult = await Expense.aggregate([
+    // Get aggregated statistics
+    const result = await Expense.aggregate([
       { $match: query },
-      { $group: { _id: null, totalExpenses: { $sum: "$amount" } } },
+      { 
+        $group: { 
+          _id: null, 
+          totalExpenses: { $sum: "$amount" },
+          count: { $sum: 1 },
+          average: { $avg: "$amount" }
+        } 
+      },
     ]);
 
-    const totalExpenses = totalExpensesResult[0]?.totalExpenses || 0;
-
+    const stats = result[0] || { totalExpenses: 0, count: 0, average: 0 };
+    
     // Get expenses by category
     const expensesByCategory = await Expense.aggregate([
       { $match: query },
@@ -67,18 +108,20 @@ export const GET = withAuth(async (req: NextRequest, { auth }) => {
       { $sort: { total: -1 } },
     ]);
 
-    const statistics = {
-      totalExpenses,
-      expensesByCategory,
-    };
-
-    return apiResponse.ok({
+    // Return in the format expected by the client
+    return NextResponse.json({
       data: {
-        statistics,
-      },
+        statistics: {
+          totalExpenses: stats.totalExpenses,
+          expensesByCategory,
+        }
+      }
     });
   } catch (error) {
     console.error("Error fetching expense statistics:", error);
-    return apiResponse.serverError("Failed to fetch expense statistics");
+    return NextResponse.json(
+      { error: "Failed to fetch expense statistics" },
+      { status: 500 }
+    );
   }
 });

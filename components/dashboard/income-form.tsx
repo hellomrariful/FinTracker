@@ -63,14 +63,14 @@ export function IncomeForm({
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSource, setSelectedSource] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Bank Transfer');
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('none');
 
   useEffect(() => {
     if (income) {
       setSelectedCategory(income.category);
       setSelectedSource(income.source);
       setSelectedPaymentMethod(income.paymentMethod || 'Bank Transfer');
-      setSelectedEmployeeId(income.employeeId || '');
+      setSelectedEmployeeId(income.employeeId || 'none');
     }
   }, [income]);
 
@@ -85,16 +85,16 @@ export function IncomeForm({
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategory(value);
-    setShowNewCategoryInput(value === 'new');
-    if (value !== 'new') {
+    setShowNewCategoryInput(value === 'new-category');
+    if (value !== 'new-category') {
       setNewCategory('');
     }
   };
 
   const handleSourceChange = (value: string) => {
     setSelectedSource(value);
-    setShowNewSourceInput(value === 'new');
-    if (value !== 'new') {
+    setShowNewSourceInput(value === 'new-source');
+    if (value !== 'new-source') {
       setNewSource('');
     }
   };
@@ -110,7 +110,7 @@ export function IncomeForm({
       const formData = new FormData(e.currentTarget);
       
       let categoryName = selectedCategory;
-      if (selectedCategory === 'new' && newCategory.trim()) {
+      if (selectedCategory === 'new-category' && newCategory.trim()) {
         // Create new category
         const result = await api.post<any>('/api/categories', {
           name: newCategory.trim(),
@@ -121,7 +121,7 @@ export function IncomeForm({
       }
 
       let sourceName = selectedSource;
-      if (selectedSource === 'new' && newSource.trim()) {
+      if (selectedSource === 'new-source' && newSource.trim()) {
         sourceName = newSource.trim();
       }
       
@@ -146,12 +146,12 @@ export function IncomeForm({
         amount: parseFloat(formData.get('amount') as string),
         date: formData.get('date') as string,
         paymentMethod: selectedPaymentMethod,
-        employeeId: selectedEmployeeId || undefined,
+        employeeId: selectedEmployeeId === 'none' ? undefined : selectedEmployeeId || undefined,
         status: 'completed' as const,
       };
 
       const result = income 
-        ? await api.put(`/api/income/${income.id}`, incomeData)
+        ? await api.patch(`/api/income/${income.id}`, incomeData)
         : await api.post('/api/income', incomeData);
 
       toast.success(income ? 'Income updated successfully' : 'Income added successfully');
@@ -207,7 +207,7 @@ export function IncomeForm({
                   {source}
                 </SelectItem>
               ))}
-              <SelectItem value="new">+ Add new source</SelectItem>
+              <SelectItem key="new-source" value="new-source">+ Add new source</SelectItem>
             </SelectContent>
           </Select>
           {showNewSourceInput && (
@@ -225,12 +225,12 @@ export function IncomeForm({
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.filter(category => category.name && category.name.trim() !== '').map((category) => (
-                <SelectItem key={category.id} value={category.name}>
+              {categories.filter(category => category.name && category.name.trim() !== '').map((category, index) => (
+                <SelectItem key={category.id || `category-${index}`} value={category.name}>
                   {category.name}
                 </SelectItem>
               ))}
-              <SelectItem value="new">+ Add new category</SelectItem>
+              <SelectItem key="new-category" value="new-category">+ Add new category</SelectItem>
             </SelectContent>
           </Select>
           {showNewCategoryInput && (
@@ -290,7 +290,7 @@ export function IncomeForm({
                 <SelectValue placeholder="Select employee (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Employee</SelectItem>
+                <SelectItem value="none">No Employee</SelectItem>
                 {employees.map((employee) => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {employee.name} - {employee.role}

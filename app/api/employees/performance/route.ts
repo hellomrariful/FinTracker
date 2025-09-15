@@ -19,7 +19,7 @@ export const GET = withAuth(async (req: NextRequest, { auth }) => {
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - months);
 
-    // Get income data grouped by employee
+    // Get income data grouped by employee for current period
     const incomeByEmployee = await Income.aggregate([
       {
         $match: {
@@ -33,7 +33,7 @@ export const GET = withAuth(async (req: NextRequest, { auth }) => {
         $group: {
           _id: "$employeeId",
           totalIncome: { $sum: "$amount" },
-          transactionCount: { $sum: 1 },
+          transactions: { $sum: 1 },
         },
       },
       {
@@ -48,22 +48,57 @@ export const GET = withAuth(async (req: NextRequest, { auth }) => {
         $unwind: "$employee",
       },
       {
-        $project: {
-          id: "$_id",
-          name: "$employee.name",
-          role: "$employee.role",
-          avatar: "$employee.avatar",
-          totalIncome: 1,
-          transactionCount: 1,
-        },
+        $sort: { totalIncome: -1 },
       },
       {
-        $sort: { totalIncome: -1 },
+        $limit: 5, // Top 5 employees
       },
     ]);
 
+    // Calculate growth for each employee
+    const prevStartDate = new Date(startDate);
+    prevStartDate.setMonth(prevStartDate.getMonth() - months);
+    const prevEndDate = new Date(startDate);
+
+    const performanceData = await Promise.all(
+      incomeByEmployee.map(async (emp) => {
+        // Get previous period income
+        const prevIncome = await Income.aggregate([
+          {
+            $match: {
+              userId: new mongoose.Types.ObjectId(auth.user.userId),
+              employeeId: emp._id,
+              date: { $gte: prevStartDate, $lt: prevEndDate },
+              status: "completed",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+            },
+          },
+        ]);
+
+        const previousTotal = prevIncome[0]?.total || 0;
+        const growth = previousTotal > 0 
+          ? ((emp.totalIncome - previousTotal) / previousTotal) * 100 
+          : 0;
+
+        return {
+          id: emp._id.toString(),
+          name: emp.employee.name,
+          role: emp.employee.role || 'Employee',
+          avatar: emp.employee.avatar,
+          totalIncome: emp.totalIncome,
+          transactions: emp.transactions,
+          growth: Math.round(growth * 10) / 10, // Round to 1 decimal
+        };
+      })
+    );
+
     return apiResponse.ok({
-      data: incomeByEmployee,
+      data: performanceData,
     });
   } catch (error) {
     console.error("Error fetching employee performance:", error);

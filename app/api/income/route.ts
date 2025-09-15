@@ -8,6 +8,7 @@ import {
   CreateIncomeSchema,
 } from "@/lib/repos/income";
 import { z } from "zod";
+import mongoose from "mongoose";
 
 // Import models to ensure they are registered
 import "@/lib/models/Employee";
@@ -41,13 +42,26 @@ export const GET = withAuth(async (req: NextRequest, { auth }) => {
 
     const filters = validationResult.data;
     console.log("📋 Filters:", filters);
+    console.log("🔑 User ID:", auth.user.userId);
+    console.log("🔑 User ID type:", typeof auth.user.userId);
 
     // Get income with filters
     const result = await incomeRepo.find(auth.user.userId, filters);
     console.log("💰 Income result:", {
       count: result.data.length,
       total: result.pagination?.total,
+      stats: result.stats,
     });
+    
+    // Debug: Check database directly
+    if (mongoose.connection.db) {
+      const directCheck = await mongoose.connection.db
+        .collection('incomes')
+        .countDocuments({ 
+          userId: new mongoose.Types.ObjectId(auth.user.userId) 
+        });
+      console.log('Direct database check - income count:', directCheck);
+    }
 
     return apiResponse.ok({
       incomes: result.data,

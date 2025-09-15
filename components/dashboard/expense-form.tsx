@@ -107,7 +107,7 @@ export function ExpenseForm({
               name="category" 
               defaultValue={expense?.category}
               onValueChange={(value) => {
-                if (value === 'new') {
+                if (value === 'new-category') {
                   setShowNewCategory(true);
                 }
               }}
@@ -121,7 +121,7 @@ export function ExpenseForm({
                     {cat.name}
                   </SelectItem>
                 ))}
-                <SelectItem value="new">+ Add new category</SelectItem>
+                <SelectItem key="new-category" value="new-category">+ Add new category</SelectItem>
               </SelectContent>
             </Select>
           ) : (

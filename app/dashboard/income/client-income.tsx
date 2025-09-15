@@ -39,6 +39,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BulkOperations } from "@/components/dashboard/bulk-operations";
 import {
   DollarSign,
   Plus,
@@ -114,6 +116,7 @@ export function ClientIncome({
     null
   );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Function to fetch all required data
   const fetchData = async () => {
@@ -145,34 +148,30 @@ export function ClientIncome({
         statsResponse,
       ] = await Promise.all([
         api
-          .get<{
-            incomes: IncomeTransaction[];
-            pagination?: any;
-            stats?: any;
-          }>("/api/income")
+          .get<any>("/api/income")
           .catch((err) => {
             console.error("Failed to fetch income:", err);
-            return { incomes: [] };
+            return { data: { incomes: [] } };
           }),
         api
-          .get<{ success: boolean; data: Employee[] }>("/api/employees")
+          .get<any>("/api/employees")
           .catch((err) => {
             console.error("Failed to fetch employees:", err);
-            return { success: false, data: [] };
+            return { data: { data: [] } };
           }),
-        api.get<Category[]>("/api/categories?type=income").catch((err) => {
+        api.get<any>("/api/categories?type=income").catch((err) => {
           console.error("Failed to fetch categories:", err);
-          return [];
+          return { data: { data: [] } };
         }),
         Promise.all([
           api
-            .get<{ data: { statistics: any } }>("/api/income/statistics")
+            .get<any>("/api/income/statistics")
             .catch((err) => {
               console.error("Failed to fetch lifetime stats:", err);
               return { data: { statistics: { totalIncome: 0 } } };
             }),
           api
-            .get<{ data: { statistics: any } }>(
+            .get<any>(
               `/api/income/statistics?startDate=${startOfMonth}&endDate=${endOfMonth}`
             )
             .catch((err) => {
@@ -180,7 +179,7 @@ export function ClientIncome({
               return { data: { statistics: { totalIncome: 0 } } };
             }),
           api
-            .get<{ data: { statistics: any } }>(
+            .get<any>(
               `/api/income/statistics?startDate=${startOfLastMonth}&endDate=${endOfLastMonth}`
             )
             .catch((err) => {
@@ -188,7 +187,7 @@ export function ClientIncome({
               return { data: { statistics: { totalIncome: 0 } } };
             }),
           api
-            .get<{ data: any[] }>("/api/employees/performance?months=1")
+            .get<any>("/api/employees/performance?months=1")
             .catch((err) => {
               console.error("Failed to fetch employee performance:", err);
               return { data: [] };
@@ -197,18 +196,28 @@ export function ClientIncome({
       ]);
 
       // Set income transactions - ensure it's always an array
-      const incomeData = incomeResponse?.incomes || [];
-      setIncomeTransactions(Array.isArray(incomeData) ? incomeData : []);
+      // API returns { success: true, data: { incomes: [...] } }
+      const incomeData = incomeResponse?.data?.incomes || incomeResponse?.incomes || [];
+      console.log("Income API Response:", incomeResponse);
+      console.log("Extracted income data:", incomeData);
+      // Map _id to id for consistency and ensure unique keys
+      const mappedIncome = Array.isArray(incomeData) 
+        ? incomeData.map((income: any) => ({
+            ...income,
+            id: income._id || income.id || `income-${Date.now()}-${Math.random()}`
+          }))
+        : [];
+      setIncomeTransactions(mappedIncome);
 
       // Set employees
-      const employeesData = employeesResponse?.data || [];
+      // API might return { success: true, data: { data: [...] } } or { success: true, data: [...] }
+      const employeesData = employeesResponse?.data?.data || employeesResponse?.data || [];
       setEmployees(Array.isArray(employeesData) ? employeesData : []);
 
-      // Set categories - this comes as direct array
-      const categoriesData = Array.isArray(categoriesResponse)
-        ? categoriesResponse
-        : [];
-      setCategories(categoriesData);
+      // Set categories - extract from data property
+      // API returns { success: true, data: [...] }
+      const categoriesData = categoriesResponse?.data?.data || categoriesResponse?.data || [];
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
 
       // Extract and process statistics with proper error handling
       const [lifetimeStats, currentMonthStats, lastMonthStats, employeeStats] =
@@ -502,10 +511,46 @@ export function ClientIncome({
               </div>
             </div>
 
+            <BulkOperations
+              items={filteredIncomeTransactions}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              onBulkAction={async (action, ids) => {
+                try {
+                  switch (action) {
+                    case "delete":
+                      await Promise.all(ids.map((id) => api.delete(`/api/income/${id}`)));
+                      toast.success("Selected income deleted");
+                      break;
+                    case "export": {
+                      const selected = filteredIncomeTransactions.filter((t) => ids.includes(t.id));
+                      const blob = new Blob([JSON.stringify(selected, null, 2)], { type: "application/json" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `income-export-${new Date().toISOString()}.json`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                      toast.success("Exported selected income to JSON");
+                      break;
+                    }
+                    default:
+                      toast.info("This bulk action is not implemented yet");
+                  }
+                } finally {
+                  await fetchData();
+                }
+              }}
+              itemType="income"
+            />
+
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">Select</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Source</TableHead>
                     <TableHead>Category</TableHead>
@@ -520,7 +565,7 @@ export function ClientIncome({
                 <TableBody>
                   {filteredIncomeTransactions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                      <TableCell colSpan={10} className="text-center py-8">
                         {searchTerm ? (
                           <p className="text-muted-foreground">
                             No income transactions match your search
@@ -549,6 +594,18 @@ export function ClientIncome({
                       );
                       return (
                         <TableRow key={income.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.has(income.id)}
+                              onCheckedChange={() => {
+                                const next = new Set(selectedIds);
+                                if (next.has(income.id)) next.delete(income.id);
+                                else next.add(income.id);
+                                setSelectedIds(next);
+                              }}
+                              aria-label={`Select ${income.name}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">
                             {income.name}
                           </TableCell>

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import * as jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { config } from "@/lib/config/env";
 import { AuthenticationError, AuthorizationError } from "@/lib/errors";
@@ -61,11 +61,11 @@ function getSecret(type: TokenType): string {
 export async function generateToken(
   payload: Omit<JWTPayload, "iat" | "exp">,
   type: TokenType = TokenType.ACCESS,
-  expiresIn = "1h"
+  expiresIn: string | number = "1h"
 ): Promise<string> {
   const secret = getSecret(type);
 
-  const token = jwt.sign({ ...payload, type }, secret, { expiresIn });
+  const token = jwt.sign({ ...payload, type }, secret, { expiresIn } as jwt.SignOptions);
 
   return token;
 }

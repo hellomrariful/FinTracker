@@ -36,7 +36,11 @@ export const GET = withAuth(async (req: NextRequest, { auth }) => {
         id: inc._id.toString(),
         name: inc.name,
         amount: inc.amount,
-        date: inc.date,
+        date: new Date(inc.date).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric' 
+        }),
         type: 'income' as const,
         status: inc.status,
         category: inc.category,
@@ -45,15 +49,24 @@ export const GET = withAuth(async (req: NextRequest, { auth }) => {
       ...expenses.map(exp => ({
         id: exp._id.toString(),
         name: exp.name,
-        amount: -exp.amount, // Negative for expenses
-        date: exp.date,
+        amount: exp.amount, // Keep positive for display
+        date: new Date(exp.date).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric' 
+        }),
         type: 'expense' as const,
         status: exp.status,
         category: exp.category,
         vendor: exp.vendor,
       })),
     ]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .sort((a, b) => {
+      // Parse the formatted dates back for sorting
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateB.getTime() - dateA.getTime();
+    })
     .slice(0, limit);
 
     return NextResponse.json({

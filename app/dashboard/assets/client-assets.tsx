@@ -90,13 +90,16 @@ export function ClientAssets({
     try {
       setIsLoading(true);
       const result = await api
-        .get<{ assets: any[]; pagination?: any }>("/api/assets")
+        .get<any>("/api/assets")
         .catch((err) => {
           console.error("Failed to fetch assets:", err);
-          return { assets: [] };
+          return { data: { assets: [] } };
         });
       // Map _id to id for consistency
-      const assetsData = result?.assets || [];
+      // API returns { success: true, data: { assets: [...] } }
+      const assetsData = result?.data?.assets || result?.assets || [];
+      console.log("Assets API Response:", result);
+      console.log("Extracted assets data:", assetsData);
       const mappedAssets = Array.isArray(assetsData)
         ? assetsData.map((asset: any) => ({
             ...asset,
@@ -170,7 +173,7 @@ export function ClientAssets({
 
       if (editingAsset) {
         // Update existing asset
-        await api.put(`/api/assets/${editingAsset.id}`, assetData);
+        await api.patch(`/api/assets/${editingAsset.id}`, assetData);
 
         toast.success("Asset updated successfully");
         setEditingAsset(null);
