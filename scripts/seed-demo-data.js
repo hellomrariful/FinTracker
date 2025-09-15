@@ -308,6 +308,7 @@ async function seedDemoData() {
         // Insert income data
         const incomeWithUserId = demoData.incomeData.map((income, index) => ({
             ...income,
+            name: income.category, // Use category as name if name is not provided
             userId,
             employeeId: employeeIds[index % employeeIds.length], // Rotate through employees
             status: 'completed',
@@ -321,6 +322,7 @@ async function seedDemoData() {
         // Insert expense data
         const expensesWithUserId = demoData.expenseData.map((expense, index) => ({
             ...expense,
+            name: expense.category, // Use category as name if name is not provided
             userId,
             employeeId: employeeIds[index % employeeIds.length], // Rotate through employees
             status: 'approved',

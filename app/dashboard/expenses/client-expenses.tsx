@@ -345,14 +345,16 @@ export function ClientExpenses({
   // Filter expenses based on search
   const filteredExpenses = expenses.filter(
     (expense) =>
-      expense.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (expense.name &&
+        expense.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (expense.category &&
+        expense.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (expense.platform &&
         expense.platform.toLowerCase().includes(searchTerm.toLowerCase())) ||
       employees
         .find((e) => e.id === expense.employeeId)
-        ?.name.toLowerCase()
-        .includes(searchTerm.toLowerCase())
+        ?.name?.toLowerCase()
+        ?.includes(searchTerm.toLowerCase())
   );
 
   const resetForm = () => {

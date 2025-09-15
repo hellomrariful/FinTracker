@@ -337,15 +337,18 @@ export function ClientIncome({
   const filteredIncomeTransactions = Array.isArray(incomeTransactions)
     ? incomeTransactions.filter(
         (income) =>
-          income.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          income.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          income.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (income.name &&
+            income.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (income.source &&
+            income.source.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (income.category &&
+            income.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (income.platform &&
             income.platform.toLowerCase().includes(searchTerm.toLowerCase())) ||
           employees
             .find((e) => e.id === income.employeeId)
-            ?.name.toLowerCase()
-            .includes(searchTerm.toLowerCase())
+            ?.name?.toLowerCase()
+            ?.includes(searchTerm.toLowerCase())
       )
     : [];
 
